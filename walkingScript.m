@@ -1,6 +1,6 @@
 %%% XRhex Walking Script %%%
 %This code sets up and runs walking motion for the original XRhex robot
-%Created 3/1/17 - Updated 4/7/17
+%Created 3/1/17 - Updated 4/8/17
 %     Leg Layout
 %       Front      %
 %   -3---------4-  %
@@ -12,27 +12,26 @@
 %   -1---------6-  %
 %  |      ^      | %
 clear;
-%% Setup %%
+%% Setup
 %Setup module groups and hebi functions, then define the robot object
 family = 'X5-1';
-names = {'X-00131','X-00147','X-00111','X-00043','X-00104','X-00129'};
+names = {'X-00131','X-00147','X-00111','X-00033','X-00104','X-00129'};
 if(~exist('setupComplete','var'))
-    %Group1 is legs 1, 3, and 5, Group2 is legs 2, 4, and 6
-    [setupComplete,group1,group2] = setup(family,names);
-    robot = XRhex(group1,group2);
+    [setupComplete,group] = setup(family,names);
+    robot = XRhex(group);
 end
 
-%% Stance Setup %%
+%% Stance Setup
 %Move legs to upward position, then prompt user to make it stand up
-robot.moveLegsToPosGroup(pi,pi);
+robot.moveLegsToPos(ones(1,6)*pi);
 disp('Set the robot down on a level surface, then press ENTER when ready.');
-pause;
+pause(1);
 %Stand up, walk n steps, return to standing pose, then stop
 robot.standUp();
-robot.holdPos(2);
+robot.holdPos(1);
 n = 10;
 for i = 1:1:n
-    robot.takeStep(pi/6,2,'walk');
+    robot.takeStep(pi/6,3,'walk');
 end
-robot.moveLegsToPosGroup(0,0);
+robot.moveLegsToPos(ones(1,6)*2*pi);
 robot.holdPos(1);
