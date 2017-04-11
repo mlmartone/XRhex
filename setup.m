@@ -11,5 +11,8 @@ function [setupComplete,group] = setup(family,names)
     gains.positionMaxTarget = ones(1,6)*realmax;
     gains.positionMinTarget = ones(1,6)*-realmax;
     group.set('Gains',gains);
+    %Turn off an annoying warning message, this is a workaround fix, and
+    %eventually should be fixed
+    warning('off','MATLAB:colon:nonIntegerIndex');
     setupComplete = true;
 end

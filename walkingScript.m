@@ -11,8 +11,10 @@
 %    |         |   %
 %   -1---------6-  %
 %  |      ^      | %
-clear;
+
 %% Setup
+%Clean up the workspace
+clear;
 %Setup module groups and hebi functions, then define the robot object
 family = 'X5-1';
 names = {'X-00131','X-00147','X-00111','X-00033','X-00104','X-00129'};
