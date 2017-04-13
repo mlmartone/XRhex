@@ -3,7 +3,7 @@
 %Updated 4/11/17
 classdef XRhex
     properties
-        maxErr = .02; %rad
+        maxErr = .05; %rad
         freq = 100; %Hz
         pauseTime = 1/(2*100); %s
         group;
@@ -33,15 +33,23 @@ classdef XRhex
             curPos = robot.fbk.position.*[1 1 1 -1 -1 -1];
             pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
             pos = pos + (curPos-robot.maxErr > pos)*2*pi;
+            posDiff = pos-curPos;
             start = tic;
+            ramp = 0;
             %Command the position until the error is satisfied
             while ~robot.checkPosError(robot.fbk)
-                robot.cmd.position = pos.*[1 1 1 -1 -1 -1];
+                ramp = ramp + .02;
+                if ramp >= 1; ramp = 1; end
+                robot.cmd.position = (curPos + posDiff*ramp).*...
+                    [1 1 1 -1 -1 -1];
                 robot.group.set(robot.cmd);
                 pause(robot.pauseTime);
                 robot.fbk = robot.group.getNextFeedback();
                 %Break out of infinite loops caused by unresponsive modules
-                if(toc(start) > 5); error('Unresponsive Module Error'); end
+                if(toc(start) > 3); 
+                    break
+                    %error('Unresponsive Module Error');
+                end
             end
         end
                 
@@ -178,11 +186,12 @@ classdef XRhex
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
             pos1 = 2*pi*ceil(curPos/(2*pi)) + ...
-                stepSize*[-1; 0; 1; 1; 0; -1];
-            pos2 = pos1 + [stepSize; stepSize; 2*pi-2*stepSize;...
-                2*pi-2*stepSize; stepSize; stepSize];
-            pos3 = pos2 + [stepSize; 2*pi-2*stepSize; stepSize;...
-                stepSize; 2*pi-2*stepSize; stepSize];
+                [-stepSize(1); 0; stepSize(1); stepSize(2); 0;...
+                -stepSize(2)];
+            pos2 = pos1 + [stepSize(1); stepSize(1); 2*pi-2*stepSize(1);...
+                2*pi-2*stepSize(2); stepSize(2); stepSize(2)];
+            pos3 = pos2 + [stepSize(1); 2*pi-2*stepSize(1); stepSize(1);...
+                stepSize(2); 2*pi-2*stepSize(2); stepSize(2)];
             stepPoints = [curPos pos1 pos2 pos3];
             stepTimes = linspace(0,stepTime,size(stepPoints,2));
             speeds = zeros(6,4);

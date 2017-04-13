@@ -36,6 +36,7 @@ buttonIgnore = .5; %s
 lastModeChange = tic;
 lastSizeChange = tic;
 lastTimeChange = tic;
+printInstructions();
 
 %% Stance Setup
 %Move legs to upward position
@@ -43,7 +44,8 @@ robot.moveLegsToPos(ones(1,6)*pi);
 %Set default walking parameters
 gait = 'tripod';
 stepSize = pi/6;
-stepTime = 4;
+stepTime = 3.5;
+cmd = CommandStruct();
 
 %% Control Loop
 while true
@@ -54,6 +56,12 @@ while true
     if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait); end
     if dpad == 45;
         robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait);
+    end
+    if dpad == 90;
+        robot.takeStep([maxStepSize minStepSize],stepTime,gait);
+    end
+    if dpad == 270;
+        robot.takeStep([minStepSize maxStepSize],stepTime,gait);
     end
     if dpad == 315;
         robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait);
@@ -104,7 +112,8 @@ while true
         disp(sprintf('Selected Gait = %s',gait));
     end
     if buttons(10); break; end
-    if buttons(11); end
+    if buttons(11); printInstructions(); end
     if buttons(12); end
+    if sum(buttons) == 0; robot.group.set(robot.cmd); end
     pause(robot.pauseTime)
 end
