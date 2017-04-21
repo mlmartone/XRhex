@@ -147,7 +147,7 @@ classdef XRhex
         function takeStep(robot,stepSize,stepTime,gaitName)
             switch gaitName
                 case 'tripod'
-                    robot.takeStepTripod(stepSize,stepTime);
+                    robot.takeStepTripodRun(stepSize,stepTime);
                 case 'wave'
                     robot.takeStepWave(stepSize,stepTime);
             end
@@ -167,14 +167,6 @@ classdef XRhex
             stepPoints = [curPos,pos1,pos2];
             stepTimes = linspace(0,stepTime,size(stepPoints,2));
             speeds = zeros(6,3);
-            %If running, find the speeds between waypoints for faster,
-            %smoother motion
-%             if(strcmp(gaitName,'run'))
-%                 %dTh = [stepPoints(:,2)-stepPoints(:,1)...
-%                     %stepPoints(:,3)-stepPoints(:,2)];
-%                 %dt = [stepTimes(2)-stepTimes(1) stepTimes(2)-stepTimes(1)];
-%                 speeds = ones(6,3)*.5;%[zeros(6,1) dTh./repmat(dt,6,1)];
-%             end
             %Generate and execute the trajectory
             walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
@@ -195,15 +187,28 @@ classdef XRhex
             stepPoints = [curPos pos1 pos2 pos3];
             stepTimes = linspace(0,stepTime,size(stepPoints,2));
             speeds = zeros(6,4);
-            %If running, find the speeds between waypoints for faster,
-            %smoother motion
-%             if(strcmp(gaitName,'run'))
-%                 dTh = [stepPoints(:,2)-stepPoints(:,1)...
-%                     stepPoints(:,3)-stepPoints(:,2)];
-%                 dt = [stepTimes(2)-stepTimes(1) stepTimes(2)-stepTimes(1)];
-%                 speeds = dTh./repmat(dt,6,1);
-%                 speeds = [zeros(6,1) speeds(:,1) speeds(:,2)];
-%             end
+            %Generate and execute the trajectory
+            walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+            robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+        end
+        
+        %Moves the robot forward by one step using the tripod gait
+        function takeStepTripodRun(robot,stepSize,stepTime)
+            %Generate the waypoints with timesteps for one step
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            pos1 = 2*pi*round(curPos/(2*pi)) + ...
+                [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
+                2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
+            pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
+                2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
+                2*stepSize(2)];
+            stepPoints = [curPos,pos1,pos2];
+            stepTimes = linspace(0,stepTime,size(stepPoints,2));
+            %dTh = [stepPoints(:,2)-stepPoints(:,1)...
+            %stepPoints(:,3)-stepPoints(:,2)];
+            %dt = [stepTimes(2)-stepTimes(1) stepTimes(2)-stepTimes(1)];
+            speeds = ones(6,3)*1;%[zeros(6,1) dTh./repmat(dt,6,1)];
             %Generate and execute the trajectory
             walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));

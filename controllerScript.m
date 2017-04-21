@@ -114,6 +114,6 @@ while true
     if buttons(10); break; end
     if buttons(11); printInstructions(); end
     if buttons(12); end
-    if sum(buttons) == 0; robot.group.set(robot.cmd); end
+    %if sum(buttons) == 0; robot.group.set(robot.cmd); end
     pause(robot.pauseTime)
 end
