@@ -48,7 +48,7 @@ classdef XRhex
                 %Break out of infinite loops caused by unresponsive modules
                 if(toc(start) > 3); 
                     break
-                    %error('Unresponsive Module Error');
+                    error('Unresponsive Module Error');
                 end
             end
         end
@@ -147,10 +147,29 @@ classdef XRhex
         function takeStep(robot,stepSize,stepTime,gaitName)
             switch gaitName
                 case 'tripod'
-                    robot.takeStepTripodRun(stepSize,stepTime);
+                    robot.takeStepTripod(stepSize,stepTime);
                 case 'wave'
                     robot.takeStepWave(stepSize,stepTime);
             end
+        end
+        
+        %Moves the robot backwards one step using the tripod gait
+        function takeStepBackwards(robot,stepSize,stepTime)
+            %Generate the waypoints with timesteps for one step
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            pos1 = 2*pi*round(curPos/(2*pi)) - ...
+                [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
+                2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
+            pos2 = pos1 - [2*pi-2*stepSize(1); 2*stepSize(1); ...
+                2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
+                2*stepSize(2)];
+            stepPoints = [curPos,pos1,pos2];
+            stepTimes = linspace(0,stepTime,size(stepPoints,2));
+            speeds = zeros(6,3);
+            %Generate and execute the trajectory
+            walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+            robot.followLegTraj(walkTraj,1,size(walkTraj,2));
         end
         
         %Moves the robot forward by one step using the tripod gait

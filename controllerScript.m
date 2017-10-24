@@ -17,8 +17,10 @@
 %Clean up the workspace
 clear;
 %Setup module groups and hebi functions, then define the robot object
-family = 'X5-1';
-names = {'X-00131','X-00147','X-00111','X-00033','X-00104','X-00129'};
+family = 'X8-3';
+names = {'X-80188','X-80096','X-80182','X-80091','X-80093','X-80095'};
+%family = 'X5-1';
+%names = {'X-00131','X-00147','X-00111','X-00033','X-00104','X-00129'};
 if(~exist('setupComplete','var'))
     [setupComplete,group] = setup(family,names);
     robot = XRhex(group);
@@ -44,7 +46,7 @@ robot.moveLegsToPos(ones(1,6)*pi);
 %Set default walking parameters
 gait = 'tripod';
 stepSize = pi/6;
-stepTime = 3.5;
+stepTime = 3;
 cmd = CommandStruct();
 
 %% Control Loop
@@ -60,12 +62,22 @@ while true
     if dpad == 90;
         robot.takeStep([maxStepSize minStepSize],stepTime,gait);
     end
+    if dpad == 135;
+        robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime);
+    end
+    if dpad == 180;
+        robot.takeStepBackwards([stepSize stepSize],stepTime);
+    end
+    if dpad == 225;
+        robot.takeStepBackwards([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime);
+    end
     if dpad == 270;
         robot.takeStep([minStepSize maxStepSize],stepTime,gait);
     end
     if dpad == 315;
         robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait);
     end
+    
     if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end
     if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end
     if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end
@@ -113,7 +125,7 @@ while true
     end
     if buttons(10); break; end
     if buttons(11); printInstructions(); end
-    if buttons(12); end
-    %if sum(buttons) == 0; robot.group.set(robot.cmd); end
+    if buttons(12); robot.standUp(); end
+    if sum(buttons) == 0; robot.group.set(robot.cmd); end
     pause(robot.pauseTime)
 end
