@@ -268,7 +268,7 @@ classdef XRhex
                 end
             end
             robot.cmd = CommandStruct();
-            robot.cmd.torque = robot.directionFlip*7;
+            robot.cmd.velocity = robot.directionFlip*10;
             robot.group.set(robot.cmd);
             pause(.5);
             robot.cmd = CommandStruct();
