@@ -1,6 +1,6 @@
 %%% XRhex Walking Script %%%
 %This code sets up and runs walking motion for the original XRhex robot
-%Created 3/1/17 - Updated 10/19/17
+%Created 3/1/17 - Updated 10/29/17
 %     Leg Layout
 %       Front      %
 %   -3---------4-  %
@@ -27,15 +27,17 @@ end
 
 %% Stance Setup
 %Move legs to upward position, then prompt user to make it stand up
-robot.moveLegsToPos(ones(1,6)*pi);
+%robot.moveLegsToPos(pi);
 disp('Set the robot down on a level surface, then press ENTER when ready.');
 pause();
 %Stand up, walk n steps, return to standing pose, then stop
-robot.standUp();
-robot.holdPos(1);
+%robot.standUp();
 n = 10;
+robot.cmd = CommandStruct();
+robot.cmd.velocity = ones(1,6)*10;
+robot.group.set(robot.cmd);
+pause();
 for i = 1:1:n
     %robot.takeStep([pi/6 pi/6],3,'tripod');
 end
-robot.moveLegsToPos(ones(1,6)*2*pi);
-robot.holdPos(1);
+%robot.moveLegsToPos(ones(1,6)*2*pi);

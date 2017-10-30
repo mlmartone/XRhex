@@ -1,7 +1,7 @@
 %%% XRhex Controller Script %%%
 %This code sets up controller support for the original XRhex robot and
 %allows a user to drive the robot
-%Created 4/9/17 - Updated 4/11/17
+%Created 4/9/17 - Updated 10/29/17
 %  X-Rhex Layout  %
 %      Front      %
 %  -3---------4-  %
@@ -19,8 +19,6 @@ clear;
 %Setup module groups and hebi functions, then define the robot object
 family = 'X8-3';
 names = {'X-80188','X-80096','X-80182','X-80091','X-80093','X-80095'};
-%family = 'X5-1';
-%names = {'X-00131','X-00147','X-00111','X-00033','X-00104','X-00129'};
 if(~exist('setupComplete','var'))
     [setupComplete,group] = setup(family,names);
     robot = XRhex(group);
@@ -57,25 +55,25 @@ while true
     
     if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait); end
     if dpad == 45;
-        robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait);
+        robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait);
     end
     if dpad == 90;
-        robot.takeStep([maxStepSize minStepSize],stepTime,gait);
+        robot.takeStep([minStepSize maxStepSize],stepTime,gait);
     end
     if dpad == 135;
-        robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime);
+        robot.takeStepBackwards([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime);
     end
     if dpad == 180;
         robot.takeStepBackwards([stepSize stepSize],stepTime);
     end
     if dpad == 225;
-        robot.takeStepBackwards([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime);
+        robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime);
     end
     if dpad == 270;
-        robot.takeStep([minStepSize maxStepSize],stepTime,gait);
+        robot.takeStep([maxStepSize minStepSize],stepTime,gait);
     end
     if dpad == 315;
-        robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait);
+        robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait);
     end
     
     if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end
@@ -124,7 +122,10 @@ while true
         disp(sprintf('Selected Gait = %s',gait));
     end
     if buttons(10); break; end
-    if buttons(11); printInstructions(); end
+    if buttons(11); 
+        printInstructions(); 
+        robot.forwardLeap();
+    end
     if buttons(12); robot.standUp(); end
     if sum(buttons) == 0; robot.group.set(robot.cmd); end
     pause(robot.pauseTime)

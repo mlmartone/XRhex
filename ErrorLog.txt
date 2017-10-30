@@ -1,0 +1,8 @@
+Error Log:
+(1) Modules briefly lose power:
+Symptoms: code crash, one or more modules reset (blue/yellow flash)
+Cause: sending commands to all modules at once
+Fix: you are running RHex under 48V, need 48V to operate so turn up power supply
+
+(2) 
+

@@ -1,14 +1,15 @@
 %% XRhex Robot Class
 %Defines an XRhex robot as a hexapod robot of X-Actuators
-%Updated 4/11/17
+%Updated 10/29/17
 classdef XRhex
     properties
-        maxErr = .05; %rad
+        maxErr = .1; %rad
         freq = 100; %Hz
         pauseTime = 1/(2*100); %s
         group;
         cmd = CommandStruct();
         fbk;
+        directionFlip = [-1 -1 -1 1 1 1];
     end
     
     methods
@@ -18,9 +19,17 @@ classdef XRhex
             robot.fbk = robot.group.getNextFeedback();
         end
         
-        %Verifies position error is within acceptable tolerance
+        %Verifies position error is within acceptable tolerance of
+        %commanded position
         function out = checkPosError(robot,fbk)
             error = abs(fbk.position-fbk.positionCmd);
+            out = max(error) < robot.maxErr;
+        end
+        
+        %Verifies position error is within acceptable tolerance of
+        %given position vector
+        function out = checkPosAgainstGiven(robot,fbk,given)
+            error = abs(fbk.position-given);
             out = max(error) < robot.maxErr;
         end
         
@@ -30,25 +39,25 @@ classdef XRhex
             %Adjust the given position to be within +1 rotation of the
             %current position
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*[1 1 1 -1 -1 -1];
+            curPos = robot.fbk.position.*robot.directionFlip;
             pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
             pos = pos + (curPos-robot.maxErr > pos)*2*pi;
             posDiff = pos-curPos;
             start = tic;
             ramp = 0;
             %Command the position until the error is satisfied
-            while ~robot.checkPosError(robot.fbk)
+            while ~robot.checkPosAgainstGiven(robot.fbk,pos)
                 ramp = ramp + .02;
                 if ramp >= 1; ramp = 1; end
                 robot.cmd.position = (curPos + posDiff*ramp).*...
-                    [1 1 1 -1 -1 -1];
+                    robot.directionFlip;
                 robot.group.set(robot.cmd);
                 pause(robot.pauseTime);
                 robot.fbk = robot.group.getNextFeedback();
                 %Break out of infinite loops caused by unresponsive modules
                 if(toc(start) > 3); 
-                    break
-                    error('Unresponsive Module Error');
+                    break;
+                    %error('Unresponsive Module Error');
                 end
             end
         end
@@ -58,7 +67,7 @@ classdef XRhex
             %Adjust the given trajectory to be within +1 rotation of the
             %current position
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            curPos = robot.fbk.position'.*robot.directionFlip';
             trajPoints = trajPoints - repmat(...
                 floor(trajPoints(:,1)/(2*pi))*2*pi,1,size(trajPoints,2));
             trajPoints = trajPoints+...
@@ -69,7 +78,7 @@ classdef XRhex
             %Iterate through commnanding the trajectory points
             for i = startPt:1:endPt-1
                 pos = trajPoints(:,i);
-                robot.cmd.position = pos'.*[1 1 1 -1 -1 -1];
+                robot.cmd.position = pos'.*robot.directionFlip;
                 robot.group.set(robot.cmd);
                 pause(robot.pauseTime);
             end
@@ -136,7 +145,7 @@ classdef XRhex
         function standUp(robot)
             %Find the current position and the next posible up position
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            curPos = robot.fbk.position'.*robot.directionFlip';
             goalPos = 2*pi*ceil(curPos/(2*pi));
             %Generate and execute a smooth trajectory
             standUpTraj = robot.generateLegTraj([curPos,goalPos],[0,1]);
@@ -157,7 +166,7 @@ classdef XRhex
         function takeStepBackwards(robot,stepSize,stepTime)
             %Generate the waypoints with timesteps for one step
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            curPos = robot.fbk.position'.*robot.directionFlip';
             pos1 = 2*pi*round(curPos/(2*pi)) - ...
                 [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
                 2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
@@ -176,7 +185,7 @@ classdef XRhex
         function takeStepTripod(robot,stepSize,stepTime)
             %Generate the waypoints with timesteps for one step
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            curPos = robot.fbk.position'.*robot.directionFlip';
             pos1 = 2*pi*round(curPos/(2*pi)) + ...
                 [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
                 2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
@@ -195,7 +204,7 @@ classdef XRhex
         function takeStepWave(robot,stepSize,stepTime)
             %Generate the waypoints with timesteps for one step
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            curPos = robot.fbk.position'.*robot.directionFlip';
             pos1 = 2*pi*ceil(curPos/(2*pi)) + ...
                 [-stepSize(1); 0; stepSize(1); stepSize(2); 0;...
                 -stepSize(2)];
@@ -215,7 +224,7 @@ classdef XRhex
         function takeStepTripodRun(robot,stepSize,stepTime)
             %Generate the waypoints with timesteps for one step
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*[1 1 1 -1 -1 -1]';
+            curPos = robot.fbk.position'.*robot.directionFlip';
             pos1 = 2*pi*round(curPos/(2*pi)) + ...
                 [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
                 2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
@@ -231,6 +240,39 @@ classdef XRhex
             %Generate and execute the trajectory
             walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+        end
+        
+        function forwardLeap(robot)
+            robot.standUp();
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos = ones(1,6)*3*pi/2;
+            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
+            pos = pos + (curPos-robot.maxErr > pos)*2*pi-2*pi;
+            posDiff = pos-curPos;
+            start = tic;
+            ramp = 0;
+            %Command the position until the error is satisfied
+            while ~robot.checkPosAgainstGiven(robot.fbk,pos)
+                ramp = ramp + .02;
+                if ramp >= 1; ramp = 1; end
+                robot.cmd.position = (curPos + posDiff*ramp).*...
+                    robot.directionFlip;
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+                robot.fbk = robot.group.getNextFeedback();
+                %Break out of infinite loops caused by unresponsive modules
+                if(toc(start) > 3); 
+                    break;
+                    %error('Unresponsive Module Error');
+                end
+            end
+            robot.cmd = CommandStruct();
+            robot.cmd.velocity = robot.directionFlip*10;
+            robot.group.set(robot.cmd);
+            pause(.5);
+            robot.cmd = CommandStruct();
+            robot.group.set(robot.cmd);
         end
     end
 end
