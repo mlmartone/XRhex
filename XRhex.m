@@ -200,6 +200,10 @@ classdef XRhex
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
         end
         
+        function waveGaitAdriana()
+            
+        end
+        
         %Moves the robot forward by one step using the tripod gait
         function takeStepWave(robot,stepSize,stepTime)
             %Generate the waypoints with timesteps for one step
