@@ -4,6 +4,7 @@
 classdef XRhex
     properties
         maxErr = .1; %rad
+        %ADD SOMETHING HERE TO PREVENT SPINOUTS (INSTEAD OF MAXERR)
         freq = 100; %Hz
         pauseTime = 1/(2*100); %s
         group;
@@ -246,8 +247,12 @@ classdef XRhex
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
         end
         
+        %Makes the robot crouch and jump forward using all 6 legs
+        %(EXPERIMENTAL)
         function forwardLeap(robot)
+            %Get the robot standing upright
             robot.standUp();
+            %Crouch down to prepare for jump
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position.*robot.directionFlip;
             pos = ones(1,6)*3*pi/2 + [pi/4 pi/8 0 0 pi/8 pi/4];
@@ -271,11 +276,65 @@ classdef XRhex
                     %error('Unresponsive Module Error');
                 end
             end
-            robot.cmd = CommandStruct();
-            robot.cmd.torque = robot.directionFlip*7;
+            %Set max torque, no position control to jump
+            robot.cmd.position = [];
+            gains = robot.group.getGains();
+            robot.cmd.torque = robot.directionFlip*gains.torqueMaxTarget(1);
+            startTime = tic;
+            while toc(startTime) < .3
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+            end
+            %Stop the jump and hold position
+            robot.fbk = robot.group.getNextFeedback();
+            robot.cmd.torque = [];
+            robot.cmd.position = robot.fbk.position;
             robot.group.set(robot.cmd);
-            pause(.5);
-            robot.cmd = CommandStruct();
+        end
+        
+        %Makes the robot crouch and jump upward using all 6 legs
+        %(EXPERIMENTAL)
+        function upwardLeap(robot)
+            %Crouch down to prepare for jump
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos = [pi/2 pi pi pi pi pi/2];
+            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
+            pos = pos + (curPos-robot.maxErr > pos)*2*pi-2*pi;
+            posDiff = pos-curPos;
+            start = tic;
+            ramp = 0;
+            %Command the position until the error is satisfied
+            while ~robot.checkPosAgainstGiven(robot.fbk,pos)
+                ramp = ramp + .02;
+                if ramp >= 1; ramp = 1; end
+                robot.cmd.position = (curPos + posDiff*ramp).*...
+                    robot.directionFlip;
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+                robot.fbk = robot.group.getNextFeedback();
+                %Break out of infinite loops caused by unresponsive modules
+                if(toc(start) > 3); 
+                    break;
+                    %error('Unresponsive Module Error');
+                end
+            end
+            %Set max torque, no position control to jump
+            robot.cmd.position = [];
+            gains = robot.group.getGains();
+            robot.cmd.torque = robot.directionFlip*gains.torqueMaxTarget(1);
+            %Dont move the front legs for this one
+            robot.cmd.torque(3) = 0;
+            robot.cmd.torque(4) = 0;
+            startTime = tic;
+            while toc(startTime) < .65
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+            end
+            %Stop the jump and hold position
+            robot.fbk = robot.group.getNextFeedback();
+            robot.cmd.torque = [];
+            robot.cmd.position = robot.fbk.position;
             robot.group.set(robot.cmd);
         end
     end
