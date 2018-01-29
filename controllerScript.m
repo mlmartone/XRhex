@@ -1,7 +1,7 @@
 %%% XRhex Controller Script %%%
 %This code sets up controller support for the original XRhex robot and
 %allows a user to drive the robot
-%Created 4/9/17 - Updated 10/29/17
+%Created 4/9/17 - Updated 10/31/17
 %  X-Rhex Layout  %
 %      Front      %
 %  -3---------4-  %
@@ -124,7 +124,7 @@ while true
     if buttons(10); break; end
     if buttons(11); 
         printInstructions(); 
-        robot.forwardLeap();
+        robot.upwardLeap();
     end
     if buttons(12); robot.standUp(); end
     if sum(buttons) == 0; robot.group.set(robot.cmd); end

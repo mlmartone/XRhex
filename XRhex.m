@@ -4,6 +4,7 @@
 classdef XRhex
     properties
         maxErr = .1; %rad
+        %ADD SOMETHING HERE TO PREVENT SPINOUTS (INSTEAD OF MAXERR)
         freq = 100; %Hz
         pauseTime = 1/(2*100); %s
         group;
@@ -152,13 +153,22 @@ classdef XRhex
             robot.followLegTraj(standUpTraj,1,size(standUpTraj,2));
         end
         
+        function standUpReverse(robot) 
+            %NEEDS TESTING - should stand up upside down
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            goalPos = 2*pi*ceil(curPos/(2*pi))+pi;
+            standUpTraj = robot.generateLegTraj([curPos,goalPos],[0,1]);
+            robot.followLegTraj(standUpTraj,1,size(standUpTraj,2));
+        end
+        
         %Moves the robot forward by one step using the selected gait
         function takeStep(robot,stepSize,stepTime,gaitName)
             switch gaitName
                 case 'tripod'
                     robot.takeStepTripod(stepSize,stepTime);
                 case 'wave'
-                    robot.takeStepWave(stepSize,stepTime);
+                    robot.waveGaitAdriana(stepSize, stepTime);
             end
         end
         
@@ -200,8 +210,82 @@ classdef XRhex
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
         end
         
-        function waveGaitAdriana()
-            
+        function takeStepReverseTripod(robot,stepSize,stepTime)
+            %Generate the waypoints with timesteps for one step
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = 2*pi*round(curPos/(2*pi)) + ...
+                [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
+                2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
+            pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
+                2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
+                2*stepSize(2)];
+            stepPoints = [curPos,pos1,pos2];
+            stepTimes = linspace(0,stepTime,size(stepPoints,2));
+            speeds = zeros(6,3);
+            %Generate and execute the trajectory
+            walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+            robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+        end
+        
+         function waveGaitAdriana(robot,stepSize,stepTime)
+             % Test with just one step size (find the right step size)
+             %Modify walking script?
+             %Fiddle with step size (find right step size), zero position
+             %(down), leg timing (larger leg timing)
+             
+              bigStep = 2*pi-stepSize;
+             %get current postion (curPosition) and make the first position
+             %normal so the robot doesn't freak out
+             robot.fbk = robot.group.getNextFeedback();
+             curPos = robot.fbk.position.*robot.directionFlip;
+             
+             %Stands up to get a nice, clean slate (Initialize Robot)
+             robot.standUp();
+             pos0 = 2*pi*ceil(curPos/(2*pi)) + ...
+                 [0, 0, 0, 0, 0, 0,];
+             %Gets to starting position
+             posA =  pos0 + [stepSize,  0, bigStep, stepSize, 0 bigStep];
+             robot.moveLegsToPos(posA);
+             
+             %First Position
+             pos1 = posA + [bigStep,  stepSize, stepSize, bigStep, ...
+                 stepSize, stepSize];
+             
+             
+             %Second Position
+             pos2 = pos1 + [stepSize,  bigStep, stepSize, stepSize, ...
+                 bigStep, stepSize];
+          
+             % third Position
+             pos3 = pos2 + [stepSize,  stepSize, bigStep, stepSize,...
+                 stepSize, bigStep];
+             
+             size(posA)
+             size(pos1)
+             size(pos2)
+             size(pos3)
+             stepPoints = [posA; pos1; pos2; pos3]; %any way to just repeat last 3
+             size(stepPoints)
+             %replaced pos0 from curPos so robot starts from nice clean slate
+             %when actually walking
+             
+             %added an extra stepPoints
+             
+             %Took from Matt's code - ask about later (why do you need this?)
+             %----stepTimes = linspace(0,stepTime,size(stepPoints,2));
+             %------speeds = zeros(6,4);
+             
+             %Took these from Matt's code because they seemed important and
+             %relatively unmutable
+            %-----walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+             %----robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+            stepTimes = linspace(0,stepTime,size(stepPoints,2));
+            speeds = zeros(6,4);
+            %Generate and execute the trajectory
+            walkTraj = robot.generateLegTraj(stepPoints',stepTimes,speeds);
+            robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+       
         end
         
         %Moves the robot forward by one step using the tripod gait
@@ -246,8 +330,12 @@ classdef XRhex
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
         end
         
+        %Makes the robot crouch and jump forward using all 6 legs
+        %(EXPERIMENTAL)
         function forwardLeap(robot)
+            %Get the robot standing upright
             robot.standUp();
+            %Crouch down to prepare for jump
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position.*robot.directionFlip;
             pos = ones(1,6)*3*pi/2 + [pi/4 pi/8 0 0 pi/8 pi/4];
@@ -271,11 +359,65 @@ classdef XRhex
                     %error('Unresponsive Module Error');
                 end
             end
-            robot.cmd = CommandStruct();
-            robot.cmd.torque = robot.directionFlip*7;
+            %Set max torque, no position control to jump
+            robot.cmd.position = [];
+            gains = robot.group.getGains();
+            robot.cmd.torque = robot.directionFlip*gains.torqueMaxTarget(1);
+            startTime = tic;
+            while toc(startTime) < .3
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+            end
+            %Stop the jump and hold position
+            robot.fbk = robot.group.getNextFeedback();
+            robot.cmd.torque = [];
+            robot.cmd.position = robot.fbk.position;
             robot.group.set(robot.cmd);
-            pause(.5);
-            robot.cmd = CommandStruct();
+        end
+        
+        %Makes the robot crouch and jump upward using all 6 legs
+        %(EXPERIMENTAL)
+        function upwardLeap(robot)
+            %Crouch down to prepare for jump
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos = [pi/2 pi pi pi pi pi/2];
+            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
+            pos = pos + (curPos-robot.maxErr > pos)*2*pi-2*pi;
+            posDiff = pos-curPos;
+            start = tic;
+            ramp = 0;
+            %Command the position until the error is satisfied
+            while ~robot.checkPosAgainstGiven(robot.fbk,pos)
+                ramp = ramp + .02;
+                if ramp >= 1; ramp = 1; end
+                robot.cmd.position = (curPos + posDiff*ramp).*...
+                    robot.directionFlip;
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+                robot.fbk = robot.group.getNextFeedback();
+                %Break out of infinite loops caused by unresponsive modules
+                if(toc(start) > 3); 
+                    break;
+                    %error('Unresponsive Module Error');
+                end
+            end
+            %Set max torque, no position control to jump
+            robot.cmd.position = [];
+            gains = robot.group.getGains();
+            robot.cmd.torque = robot.directionFlip*gains.torqueMaxTarget(1);
+            %Dont move the front legs for this one
+            robot.cmd.torque(3) = 0;
+            robot.cmd.torque(4) = 0;
+            startTime = tic;
+            while toc(startTime) < .65
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+            end
+            %Stop the jump and hold position
+            robot.fbk = robot.group.getNextFeedback();
+            robot.cmd.torque = [];
+            robot.cmd.position = robot.fbk.position;
             robot.group.set(robot.cmd);
         end
     end
