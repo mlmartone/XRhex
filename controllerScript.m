@@ -1,11 +1,7 @@
 %%% XRhex Controller Script %%%
 %This code sets up controller support for the original XRhex robot and
 %allows a user to drive the robot
-<<<<<<< HEAD
-%Created 4/9/17 - Updated 10/31/17
-=======
 %Created 4/9/17 - Updated 1/18/18
->>>>>>> 5d169646113290969542c7deda03ea6fe07d14b8
 %  X-Rhex Layout  %
 %      Front      %
 %  -3---------4-  %
