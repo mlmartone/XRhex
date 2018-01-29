@@ -6,6 +6,7 @@ legRad = 3; %inches
 minDist = 2; %inches
 legSpread = 14.5; %inches
 %Check if body angle is possible
+if(abs(bodyTh) > atan2(legRad*2-minDist,legSpread))
     error('Not admissible body angle for current RHex configuration.');
 end
 %Calculate lower leg distance needed for correct angle (assuming upper leg
@@ -18,6 +19,7 @@ lowerLegTh = acos((dLow-3)/3) + abs(bodyTh);
 dMid = 2*legRad - sin(abs(bodyTh))*legSpread/2;
 %Calculate angle offset for lower leg
 middleLegTh = acos((dMid-3)/3) + abs(bodyTh);
+upperLegTh = abs(bodyTh);
 %Assign angles to legs depending on sign of angle
 if(sign(bodyTh) == 1)
     legPos = [lowerLegTh middleLegTh upperLegTh upperLegTh middleLegTh ...
