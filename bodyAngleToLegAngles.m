@@ -11,13 +11,15 @@ if(abs(bodyTh) > atan2(legRad*2-minDist,legSpread))
 end
 %Calculate lower leg distance needed for correct angle (assuming upper leg
 %is max height)
-d = legRad - tan(abs(bodyTh))*legSpread;
+dLow = 2*legRad - sin(abs(bodyTh))*legSpread;
 %Calculate angle offset for lower leg
-alpha = asin(d/legRad);
-%Final calculation of leg angles
-lowerLegTh = abs(bodyTh) + alpha;
+lowerLegTh = acos((dLow-3)/3) + abs(bodyTh);
+%Calculate middle leg distance needed for correct angle (assuming upper leg
+%is max height)
+dMid = 2*legRad - sin(abs(bodyTh))*legSpread/2;
+%Calculate angle offset for lower leg
+middleLegTh = acos((dMid-3)/3) + abs(bodyTh);
 upperLegTh = abs(bodyTh);
-middleLegTh = (upperLegTh+lowerLegTh)/2;
 %Assign angles to legs depending on sign of angle
 if(sign(bodyTh) == 1)
     legPos = [lowerLegTh middleLegTh upperLegTh upperLegTh middleLegTh ...
@@ -26,6 +28,5 @@ else
     legPos = [upperLegTh middleLegTh lowerLegTh lowerLegTh middleLegTh ...
         upperLegTh];
 end
-
 end
 

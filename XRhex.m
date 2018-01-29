@@ -62,6 +62,37 @@ classdef XRhex
                 end
             end
         end
+        
+        %Moves the legs to a given set of positions with no constraints on
+        %time or torque, but verifying position error before returning
+        function biDirMoveLegsToPos(robot,pos)
+            %Adjust the given position to be within +/-1 rotation of the
+            %current position
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
+            if abs(pos + 2*pi-curPos) < abs(pos-curPos)
+                pos = pos + 2*pi;
+            end
+            posDiff = pos-curPos;
+            start = tic;
+            ramp = 0;
+            %Command the position until the error is satisfied
+            while ~robot.checkPosAgainstGiven(robot.fbk,pos)
+                ramp = ramp + .02;
+                if ramp >= 1; ramp = 1; end
+                robot.cmd.position = (curPos + posDiff*ramp).*...
+                    robot.directionFlip;
+                robot.group.set(robot.cmd);
+                pause(robot.pauseTime);
+                robot.fbk = robot.group.getNextFeedback();
+                %Break out of infinite loops caused by unresponsive modules
+                if(toc(start) > 3); 
+                    break;
+                    %error('Unresponsive Module Error');
+                end
+            end
+        end
                 
         %Moves the legs of the robot through given trajectory points
         function followLegTraj(robot,trajPoints,startPt,endPt)

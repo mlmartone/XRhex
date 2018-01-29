@@ -39,6 +39,7 @@ printInstructions();
 robot.moveLegsToPos(ones(1,6)*pi);
 cmd = CommandStruct();
 
+bodyTh = 0;
 %% Control Loop
 while true
     %Read in the next input from the joystick
@@ -54,12 +55,18 @@ while true
     if dpad == 270; end
     if dpad == 315; end
     
-    if buttons(1); robot.moveLegsToPos(bodyAngleToLegAngles(.262)); end
+    if buttons(1); end
     if buttons(2); robot.moveLegsToPos(zeros(1,6)); end
     if buttons(3); end
     if buttons(4); end
-    if buttons(5); end
-    if buttons(6); end
+    if buttons(5);
+        bodyTh = max(bodyTh - .05,-.269);
+        robot.biDirMoveLegsToPos(bodyAngleToLegAngles(bodyTh));
+    end
+    if buttons(6);
+        bodyTh = min(bodyTh + .05,.269);
+        robot.biDirMoveLegsToPos(bodyAngleToLegAngles(bodyTh));
+    end
     if buttons(7); end
     if buttons(8); end
     if buttons(9); end
