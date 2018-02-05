@@ -20,7 +20,7 @@ clear;
 family = 'X8-3';
 names = {'X-80188','X-80096','X-80182','X-80091','X-80093','X-80095'};
 if(~exist('setupComplete','var'))
-    [setupComplete,group] = setup(family,names);
+    [setupComplete,group] = setupRHex(family,names);
     robot = XRhex(group);
 end
 

@@ -1,5 +1,5 @@
 %Sets up paths, module groups, and gains to run X-Rhex
-function [setupComplete,group] = setup(family,names)
+function [setupComplete,group] = setupRHex(family,names)
     addpath('hebi');
     currentDir = fileparts(mfilename('fullpath'));
     addpath(fullfile(currentDir,'hebi'));

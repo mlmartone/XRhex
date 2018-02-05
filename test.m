@@ -3,26 +3,15 @@
 clear;
 %Setup module groups and hebi functions, then define the robot object
 family = 'X8-3';
-names = {'X-80188'};
-
-addpath('hebi');
-currentDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(currentDir,'hebi'));
-group = HebiLookup.newGroupFromNames(family,names);
-%Set the gains so that the modules can turn in one direction for a long
-%time, this is a workaround fix, and eventually modules will need to be
-%recalibrated or returned to original 0 position
-gains = group.getGains();
-gains.positionMaxTarget = realmax;
-gains.positionMinTarget = -realmax;
-group.set('Gains',gains);
-%Make command lifetime infinite
-group.setCommandLifetime(0);
-%Turn off an annoying warning message, this is a workaround fix, and
-%eventually should be fixed
-warning('off','MATLAB:colon:nonIntegerIndex');
-setupComplete = true;
-joy = vrjoystick(1);
-cmd = CommandStruct();
-cmd.position = [0];
-group.set(cmd);
+names = {'X-80188','X-80096','X-80182','X-80091','X-80093','X-80095'};
+if(~exist('setupComplete','var'))
+    [setupComplete,group] = setupRHex(family,names);
+    robot = XRhex(group);
+end
+group.startLog('Directory','logs');
+    pause(3);
+    log = group.stopLog();
+    gyroOffsets = [mean(log.gyroX); mean(log.gyroY); mean(log.gyroZ)];
+    accelOffsets = [mean(log.accelX); mean(log.accelY)+9.81; mean(log.accelZ)];
+    save offsets gyroOffsets accelOffsets
+    display('Gyros and Accelerometers calibrated!');
