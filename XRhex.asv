@@ -211,25 +211,16 @@ classdef XRhex
             curPos = robot.fbk.position'.*robot.directionFlip';
             
             if(upsideDown == true)
-                pos1 = 2*pi*round(curPos/(2*pi)) + ...
-                [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
-                2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
-            pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
-                2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
-                2*stepSize(2)];
-            
-            pos1 = pos1+ pi*[1 -1 1 -1 1 -1]';
-            pos2 = pos2+ pi*[1 -1 1 -1 1 -1]';
-            
+                
             else
+                
+            end
             pos1 = 2*pi*round(curPos/(2*pi)) - ...
                 [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
                 2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
             pos2 = pos1 - [2*pi-2*stepSize(1); 2*stepSize(1); ...
                 2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
                 2*stepSize(2)];
-            end
-            
             stepPoints = [curPos,pos1,pos2];
             stepTimes = linspace(0,stepTime,size(stepPoints,2));
             speeds = zeros(6,3);

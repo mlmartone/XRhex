@@ -62,13 +62,14 @@ while true
         robot.takeStep([minStepSize maxStepSize],stepTime,gait,upsideDown);
     end
     if dpad == 135;
-        robot.takeStepBackwards([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime);
+        robot.takeStepBackwards([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime, upsideDown);
     end
     if dpad == 180;
-        robot.takeStepBackwards([stepSize stepSize],stepTime);
+        robot.takeStepBackwards([stepSize stepSize],stepTime, upsideDown);
     end
     if dpad == 225;
-        robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime);
+        robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime, upsideDown);
+    %Why the weird step sizes?
     end
     if dpad == 270;
         robot.takeStep([maxStepSize minStepSize],stepTime,gait, upsideDown);
@@ -77,6 +78,7 @@ while true
         robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait, upsideDown);
     end
     
+    %what does this do?
     if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end
     if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end
     if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end
@@ -130,10 +132,12 @@ while true
         upsideDown = false;
         disp('Upside Down is');
         disp(upsideDown);
+     
         else
         upsideDown = true;
         disp('Upside Down is');
         disp(upsideDown);
+         disp('Note: Backward Walking Experimental');
         end
     end
     if buttons(12); %right joystick
