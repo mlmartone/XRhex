@@ -1,14 +1,7 @@
 %%% XRhex Controller Script %%%
 %This code sets up controller support for the original XRhex robot and
 %allows a user to drive the robot
-<<<<<<< HEAD
-%Created 4/9/17 - Updated 10/31/17
-
 %Created 4/9/17 - Updated 1/18/18
-
-=======
-%Created 4/9/17 - Updated 1/18/18
->>>>>>> 7ca110efec2d6cd06e01f526db169e2e9bcf00c5
 %  X-Rhex Layout  %
 %      Front      %
 %  -3---------4-  %
@@ -34,6 +27,7 @@ minStepTime = 2;
 maxStepTime = 10;
 minStepSize = 0;
 maxStepSize = pi/3;
+upsideDown = false;
 
 %% Joystick Setup
 %Get joystick handle
@@ -60,12 +54,12 @@ while true
     [sticks, buttons, dpad] = read(joy);
     sticks = sticks.*[1 -1 1 -1];
     
-    if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait); end
+    if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait, upsideDown); end
     if dpad == 45;
-        robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait);
+        robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait, upsideDown);
     end
     if dpad == 90;
-        robot.takeStep([minStepSize maxStepSize],stepTime,gait);
+        robot.takeStep([minStepSize maxStepSize],stepTime,gait,upsideDown);
     end
     if dpad == 135;
         robot.takeStepBackwards([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime);
@@ -77,10 +71,10 @@ while true
         robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime);
     end
     if dpad == 270;
-        robot.takeStep([maxStepSize minStepSize],stepTime,gait);
+        robot.takeStep([maxStepSize minStepSize],stepTime,gait, upsideDown);
     end
     if dpad == 315;
-        robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait);
+        robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait, upsideDown);
     end
     
     if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end
@@ -131,10 +125,23 @@ while true
     if buttons(10); break; end
     if buttons(11); 
         printInstructions(); 
-        robot.upwardLeap();
+        %robot.upwardLeap();
+        if(upsideDown == true)
+        upsideDown = false;
+        disp('Upside Down is');
+        disp(upsideDown);
+        else
+        upsideDown = true;
+        disp('Upside Down is');
+        disp(upsideDown);
+        end
     end
     if buttons(12); %right joystick
-        robot.standUpReverse(); 
+        if(upsideDown == true)
+            robot.standUpReverse();   
+        else
+             robot.standUp();
+        end
     end 
     %originally robot.standUp()
     if sum(buttons) == 0; robot.group.set(robot.cmd); end

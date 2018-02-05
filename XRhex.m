@@ -195,10 +195,10 @@ classdef XRhex
         end
         
         %Moves the robot forward by one step using the selected gait
-        function takeStep(robot,stepSize,stepTime,gaitName)
+        function takeStep(robot,stepSize,stepTime,gaitName, upsideDown)
             switch gaitName
                 case 'tripod'
-                    robot.takeStepTripod(stepSize,stepTime);
+                    robot.takeStepTripod(stepSize,stepTime,upsideDown);
                 case 'wave'
                     robot.waveGaitAdriana(stepSize, stepTime);
             end
@@ -224,16 +224,32 @@ classdef XRhex
         end
         
         %Moves the robot forward by one step using the tripod gait
-        function takeStepTripod(robot,stepSize,stepTime)
+        function takeStepTripod(robot,stepSize,stepTime, upsideDown)
             %Generate the waypoints with timesteps for one step
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
+          
+            if (upsideDown == true)
             pos1 = 2*pi*round(curPos/(2*pi)) + ...
                 [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
                 2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
             pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
                 2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
                 2*stepSize(2)];
+            
+            %actual upsideDown stuff,m
+                pos1 = pos1+pi*[1 -1 1 -1 1 -1]';
+                pos2 = pos2+pi*[1 -1 1 -1 1 -1]';    
+            else
+            pos1 = 2*pi*round(curPos/(2*pi)) + ...
+                [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
+                2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
+            pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
+                2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
+                2*stepSize(2)];
+            %no upsideDown part
+            end
+            
             stepPoints = [curPos,pos1,pos2];
             stepTimes = linspace(0,stepTime,size(stepPoints,2));
             speeds = zeros(6,3);
