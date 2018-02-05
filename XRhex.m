@@ -188,7 +188,8 @@ classdef XRhex
             %NEEDS TESTING - should stand up upside down
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
-            goalPos = 2*pi*ceil(curPos/(2*pi))+pi;
+            goalPos = 2*pi*ceil(curPos/(2*pi))-pi;
+            %add pi?
             standUpTraj = robot.generateLegTraj([curPos,goalPos],[0,1]);
             robot.followLegTraj(standUpTraj,1,size(standUpTraj,2));
         end
@@ -243,6 +244,9 @@ classdef XRhex
         
         function takeStepReverseTripod(robot,stepSize,stepTime)
             %Generate the waypoints with timesteps for one step
+            %make sure it does not walk cable forward
+            %modify Matt's function - add a parameter to the function to
+            %make it upside down 
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
             pos1 = 2*pi*round(curPos/(2*pi)) + ...
@@ -251,6 +255,9 @@ classdef XRhex
             pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
                 2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
                 2*stepSize(2)];
+            %package this better? comments?
+            pos1 = pos1+pi*[1 -1 1 -1 1 -1]';
+            pos2 = pos2+pi*[1 -1 1 -1 1 -1]';
             stepPoints = [curPos,pos1,pos2];
             stepTimes = linspace(0,stepTime,size(stepPoints,2));
             speeds = zeros(6,3);
@@ -291,26 +298,8 @@ classdef XRhex
              % third Position
              pos3 = pos2 + [stepSize,  stepSize, bigStep, stepSize,...
                  stepSize, bigStep];
-             
-             size(posA)
-             size(pos1)
-             size(pos2)
-             size(pos3)
              stepPoints = [posA; pos1; pos2; pos3]; %any way to just repeat last 3
              size(stepPoints)
-             %replaced pos0 from curPos so robot starts from nice clean slate
-             %when actually walking
-             
-             %added an extra stepPoints
-             
-             %Took from Matt's code - ask about later (why do you need this?)
-             %----stepTimes = linspace(0,stepTime,size(stepPoints,2));
-             %------speeds = zeros(6,4);
-             
-             %Took these from Matt's code because they seemed important and
-             %relatively unmutable
-            %-----walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
-             %----robot.followLegTraj(walkTraj,1,size(walkTraj,2));
             stepTimes = linspace(0,stepTime,size(stepPoints,2));
             speeds = zeros(6,4);
             %Generate and execute the trajectory

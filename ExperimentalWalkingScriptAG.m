@@ -1,3 +1,4 @@
+
 %%% XRhex Walking Script Experimential%%%
 %This code sets up and runs walking motion for the original XRhex robot
 %Created 3/1/17 - Updated 10/29/17
@@ -25,7 +26,7 @@ if(~exist('setupComplete','var'))
     robot = XRhex(group);
 end
 
-stepSize = [pi/6 , pi/6];
+stepSize = [pi/6, pi/6];
 stepTime = 3;
 
 %% Stance Setup
@@ -34,42 +35,22 @@ stepTime = 3;
 disp('Set the robot down on a level surface, then press ENTER when ready.');
 pause();
 %Stand up, walk n steps, return to standing pose, then stop
+robot.standUpReverse();
 %robot.standUp();
-n = 1;
+n = 5;
 robot.cmd = CommandStruct();
 robot.group.set(robot.cmd);
 
-%robot.standUp();
-robot.standUpReverse(); %reverse stand up
 disp('another pause');
 pause();
 for i = 1:1:n
     
-  % robot.takeStep([pi/6 pi/6],3,'tripod');
-     %robot.waveGaitAdriana(pi/6, 3);
-  % robot.takeStepTripod([pi/6,pi/6], 3);
-  
-  %the following code should be takeStepReverseTripod
-   robot.fbk = robot.group.getNextFeedback();
-   curPos = robot.fbk.position'.*robot.directionFlip';
-   
-   %added negatives to stepSize
-   pos1 = 2*pi*round(curPos/(2*pi)) + ...
-         [stepSize(1); -(2*pi-stepSize(1)); stepSize(1); ...
-         -(2*pi-stepSize(2)); stepSize(2); -(2*pi-stepSize(2))];
-  
-   pos2 = pos1 + [-(2*pi-2*stepSize(1)); 2*stepSize(1); ...
-         -(2*pi-2*stepSize(1)); 2*stepSize(2); -(2*pi-2*stepSize(2));...
-          2*stepSize(2)];
-     
-  
-   stepPoints = [curPos, pos1, pos2];
-   stepTimes = linspace(0,stepTime,size(stepPoints,2));
-   
-   speeds = zeros(6,3); %change 3 to numSteps
-            %Generate and execute the trajectory
-  walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
-  robot.followLegTraj(walkTraj,1,size(walkTraj,2));
-         
-     
+           robot.takeStepReverseTripod(stepSize, stepTime);
+           %right now, this is is the exact same code as normal tripod (I
+           %have a list of experiments from the other one though from
+           %testing) but it behaves differently if I use standUpReverse
+           %before running the code versus standUp();
+            
+  disp('next step?');   
+     pause();
 end
