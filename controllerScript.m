@@ -53,7 +53,10 @@ while true
     %Read in the next input from the joystick
     [sticks, buttons, dpad] = read(joy);
     sticks = sticks.*[1 -1 1 -1];
-    
+    %Direciton Pad Control, tell robot to walk forward, backward, turn,
+    %etc.
+    %Step sizes allow for turning by altering steps on right and left
+    %sides, bigger step disparities allow for sharper turns
     if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait, upsideDown); end
     if dpad == 45;
         robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait, upsideDown);
@@ -72,7 +75,10 @@ while true
     end
     if dpad == 225;
         robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime, upsideDown);
+<<<<<<< HEAD
     %to fix turning, switch left and right and it should be okay
+=======
+>>>>>>> 8e862aea69b251277d675dc4eb8a9e88bc287696
     end
     if dpad == 270;
         robot.takeStep([maxStepSize minStepSize],stepTime,gait, upsideDown);
@@ -81,6 +87,7 @@ while true
         robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait, upsideDown);
     end
     
+<<<<<<< HEAD
     %buttons 1-4 are debug - moves like a clock as a debugger)
     %rewrite and make second controller script for upside-down walking
     %adapt buttonignore to upside-down walking toggle -- 5/6 for example
@@ -88,10 +95,15 @@ while true
     %tic - how long since matlab has been installed
     %toc - elapsed since last called tic
     
+=======
+    %Move all legs to clock positions, mostly for debug purposes
+>>>>>>> 8e862aea69b251277d675dc4eb8a9e88bc287696
     if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end
     if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end
     if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end
     if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end
+    
+    %Alter step parameters, prevent duplicate button presses
     if buttons(5) && toc(lastTimeChange) > buttonIgnore;
         lastTimeChange = tic;
         stepTime = stepTime - .25;
@@ -133,7 +145,9 @@ while true
         end
         disp(sprintf('Selected Gait = %s',gait));
     end
+    %Quit loop on button press
     if buttons(10); break; end
+    %Print instructions for user in console
     if buttons(11); 
         printInstructions(); 
         %can switch to button 1 -- add a comment
@@ -149,6 +163,7 @@ while true
          disp('Note: Backward Walking Experimental');
         end
     end
+    %Stand up
     if buttons(12); %right joystick
         if(upsideDown == true)
             robot.standUpReverse();   
