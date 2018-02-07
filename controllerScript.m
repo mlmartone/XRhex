@@ -57,19 +57,22 @@ while true
     if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait, upsideDown); end
     if dpad == 45;
         robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait, upsideDown);
+        %arc turn
     end
     if dpad == 90;
         robot.takeStep([minStepSize maxStepSize],stepTime,gait,upsideDown);
+        %point turn
     end
     if dpad == 135;
         robot.takeStepBackwards([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime, upsideDown);
     end
     if dpad == 180;
         robot.takeStepBackwards([stepSize stepSize],stepTime, upsideDown);
+        %add if statements into code itself to fix turning
     end
     if dpad == 225;
         robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime, upsideDown);
-    %Why the weird step sizes?
+    %to fix turning, switch left and right and it should be okay
     end
     if dpad == 270;
         robot.takeStep([maxStepSize minStepSize],stepTime,gait, upsideDown);
@@ -78,7 +81,13 @@ while true
         robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait, upsideDown);
     end
     
-    %what does this do?
+    %buttons 1-4 are debug - moves like a clock as a debugger)
+    %rewrite and make second controller script for upside-down walking
+    %adapt buttonignore to upside-down walking toggle -- 5/6 for example
+    
+    %tic - how long since matlab has been installed
+    %toc - elapsed since last called tic
+    
     if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end
     if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end
     if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end
@@ -127,7 +136,7 @@ while true
     if buttons(10); break; end
     if buttons(11); 
         printInstructions(); 
-        %robot.upwardLeap();
+        %can switch to button 1 -- add a comment
         if(upsideDown == true)
         upsideDown = false;
         disp('Upside Down is');
@@ -144,7 +153,7 @@ while true
         if(upsideDown == true)
             robot.standUpReverse();   
         else
-             robot.standUp();
+            robot.standUp();
         end
     end 
     %originally robot.standUp()

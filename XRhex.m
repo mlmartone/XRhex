@@ -245,6 +245,14 @@ classdef XRhex
             curPos = robot.fbk.position'.*robot.directionFlip';
           
             if (upsideDown == true)
+            stepSize1 = stepSize(1);
+            stepSize2 = stepSize(2);
+            
+            %may break later keep tabs
+            
+            stepSize(1) = stepSize2;
+            stepSize(2) = stepSize1;
+            
             pos1 = 2*pi*round(curPos/(2*pi)) - ...
                 [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
                 2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
