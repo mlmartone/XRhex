@@ -313,11 +313,10 @@ classdef XRhex
         end
         
         function flipRobot(robot)
-            
-             
-             %puts legs up in two part motion 
              robot.fbk = robot.group.getNextFeedback();
              curPos = robot.fbk.position.*robot.directionFlip;
+             
+             %puts legs up in two part motion 
              pos1 = curPos+[0, 0, -5*pi/4, -5*pi/4, 0, 0];  %-pi might work?
              robot.moveLegsToPos(pos1);
              robot.fbk = robot.group.getNextFeedback();
@@ -326,24 +325,9 @@ classdef XRhex
              robot.moveLegsToPos(pos1);
              %Works so far
              
-             
-             %Walk other legs forward
              robot.fbk = robot.group.getNextFeedback();
              curPos = robot.fbk.position.*robot.directionFlip;
-             pos2 = curPos +[0, -pi/4, 0, 0, -pi/4, 0];
-             robot.moveLegsToPos(pos2);
-             
-             
-             %Gently pushes up
-                    %robot.fbk = robot.group.getNextFeedback();
-                    %curPos = robot.fbk.position.*robot.directionFlip;
-                    %pos3 = curPos+ [0, 0, pi/4, pi/4, 0, 0];
-                    %robot.moveLegsToPos(pos3);
-             %pi/4 works for gently pushing up, but need to gently push
-             %back at times. adding a negative makes it swing all the way
-             %around, ask Matt about it eventually
-             
-             %Works, but not in way it was intended to work
+             pos2 = curPos+
           
         end
         

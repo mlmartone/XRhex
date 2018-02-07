@@ -1,7 +1,8 @@
-%%% XRhex Controller Script %%%
+%%% Experimental XRhex Controller Script flipping) %%%
 %This code sets up controller support for the original XRhex robot and
 %allows a user to drive the robot
 %Created 4/9/17 - Updated 1/18/18
+%Has upside-down walking and most normal capacilities 
 %  X-Rhex Layout  %
 %      Front      %
 %  -3---------4-  %
@@ -91,10 +92,10 @@ while true
     %tic - how long since matlab has been installed
     %toc - elapsed since last called tic
     %Move all legs to clock positions, mostly for debug purposes
-    if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end %all point forward
-    if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end %point up
-    if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end %point backward
-    if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end %point down
+    if buttons(1); robot.flipRobot(); end
+    if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end
+    if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end
+    if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end
     
     %Alter step parameters, prevent duplicate button presses
     if buttons(5) && toc(lastTimeChange) > buttonIgnore;
