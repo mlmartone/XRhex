@@ -349,25 +349,10 @@ classdef XRhex
            %robot at steeper tilt at this point 
             
            %robot pushes itself rapidly upward
-           
-           %severe tilt but resting on its legs in a way that seems bad for
-           %the modules
-           robot.fbk = robot.group.getNextFeedback();
-          curPos = robot.fbk.position.*robot.directionFlip;
-          pos1 = curPos+[7*pi/4, 0, 0, 0, 0, 7*pi/4]; %-pi/2 means its resting on the pads
-          robot.moveLegsToPos(pos1);   
-          
-          %push up FAST
-           robot.fbk = robot.group.getNextFeedback();
+            robot.fbk = robot.group.getNextFeedback();
            curPos = robot.fbk.position.*robot.directionFlip;
-           pos1 = curPos+[0, 0, -3*pi/4, -3*pi/4, 0, 0]; 
-           robot.moveLegsToPos(pos1);
-           
-           %right position but too slow
-           %robot.fbk = robot.group.getNextFeedback();
-          % curPos = robot.fbk.position.*robot.directionFlip;
-           %%pos1 = curPos+[-7*pi/4, 0, 0, 0, 0, -7*pi/4]; %-pi/2 means its resting on the pads
-           %robot.moveLegsToPos(pos1);   
+           pos1 = curPos+[-pi, 0, 0, 0, 0, -pi]; %-pi/2 means its resting on the pads
+           robot.moveLegsToPos(pos1);   
            
            
             %push up?
