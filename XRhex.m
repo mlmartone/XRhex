@@ -313,38 +313,43 @@ classdef XRhex
         end
         
         function flipRobot(robot)
+            %starts right side up and flips
+           
+             %crouches with front legs up - front legs need to be back more
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos = [pi/2 pi/2 pi/2 pi/2 pi/2 pi/2]; 
+            %originally, two middle ones were pi
+            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos);
             
-             
-             %puts legs up in two part motion 
-             robot.fbk = robot.group.getNextFeedback();
-             curPos = robot.fbk.position.*robot.directionFlip;
-             pos1 = curPos+[0, 0, -5*pi/4, -5*pi/4, 0, 0];  %-pi might work?
-             robot.moveLegsToPos(pos1);
-             robot.fbk = robot.group.getNextFeedback();
-             curPos = robot.fbk.position.*robot.directionFlip;
-             pos1 = curPos+[0, 0, -7*pi/4, -7*pi/4, 0, 0]; %-6pi/4 works
-             robot.moveLegsToPos(pos1);
-             %Works so far
-             
-             
-             %Walk other legs forward
-             robot.fbk = robot.group.getNextFeedback();
-             curPos = robot.fbk.position.*robot.directionFlip;
-             pos2 = curPos +[0, -pi/4, 0, 0, -pi/4, 0];
-             robot.moveLegsToPos(pos2);
-             
-             
-             %Gently pushes up
-                    %robot.fbk = robot.group.getNextFeedback();
-                    %curPos = robot.fbk.position.*robot.directionFlip;
-                    %pos3 = curPos+ [0, 0, pi/4, pi/4, 0, 0];
-                    %robot.moveLegsToPos(pos3);
-             %pi/4 works for gently pushing up, but need to gently push
-             %back at times. adding a negative makes it swing all the way
-             %around, ask Matt about it eventually
-             
-             %Works, but not in way it was intended to work
-          
+           robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos1 = curPos+[-pi, -pi, 0, 0, -pi, -pi]; 
+            robot.moveLegsToPos(pos1);
+            
+            %this "step" might be too big
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos1 = curPos+[0, pi/4, 0, 0, pi/4, 0]; 
+            robot.moveLegsToPos(pos1);
+
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position.*robot.directionFlip;
+           pos1 = curPos+[0, pi/2, 0, 0, pi/2, 0]; 
+           robot.moveLegsToPos(pos1);
+
+            
+            
+            %push up?
+            %robot.fbk = robot.group.getNextFeedback();
+            %curPos = robot.fbk.position.*robot.directionFlip;
+            %pos1 = curPos+[0, 0, -pi, -pi, 0, 0]; 
+            %robot.moveLegsToPos(pos1);
+            
+            
+            
+           disp('done flipping');
         end
         
          function waveGaitAdriana(robot,stepSize,stepTime)

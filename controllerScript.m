@@ -143,7 +143,7 @@ while true
     %Print instructions for user in console
     if buttons(11) && toc(lastTimeChange) > buttonIgnore; 
         lastTimeChange = tic;
-        
+
         printInstructions(); 
         %can switch to button 1 -- add a comment
         if(upsideDown == true)
