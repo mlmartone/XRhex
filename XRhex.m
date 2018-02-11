@@ -378,25 +378,27 @@ classdef XRhex
           pos1 = curPos+[7*pi/4, 0, 0, 0, 0, 7*pi/4]; %-pi/2 means its resting on the pads
           robot.moveLegsToPos(pos1);   
           
+          robot.standUpReverse();
    
-           
-           %right position but too slow
-           %robot.fbk = robot.group.getNextFeedback();
-          % curPos = robot.fbk.position.*robot.directionFlip;
-           %%pos1 = curPos+[-7*pi/4, 0, 0, 0, 0, -7*pi/4]; %-pi/2 means its resting on the pads
-           %robot.moveLegsToPos(pos1);   
-           
-           
-            %push up?
-            %robot.fbk = robot.group.getNextFeedback();
-            %curPos = robot.fbk.position.*robot.directionFlip;
-            %pos1 = curPos+[0, 0, -pi, -pi, 0, 0]; 
-            %robot.moveLegsToPos(pos1);
-            
-            
-            
-           disp('done flipping');
+        disp('Done Flipping: Remember to Switch to Upside-Down Mode');
         end
+        
+      function flipRobotReverse(robot)
+            %starts upside-down and flips
+            %requires smooth surface
+            
+            %crouches with front legs up - front legs need to be back more
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos = [-3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2]; 
+            %originally, two middle ones were pi
+            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.biDirMoveLegsToPos(pos);
+            
+            
+           disp('Done Flipping: Remember to Switch to Normal Mode');
+        end
+        
         
          function waveGaitAdriana(robot,stepSize,stepTime)
              %DO NOT USE -- UNEXPECTED ERRORS

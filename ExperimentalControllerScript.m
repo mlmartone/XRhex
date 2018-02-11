@@ -93,7 +93,7 @@ while true
     %toc - elapsed since last called tic
     %Move all legs to clock positions, mostly for debug purposes
     if buttons(1); robot.flipRobot(); end
-    if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end
+    if buttons(2); robot.flipRobotReverse(); end
     if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end
     if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end
     
