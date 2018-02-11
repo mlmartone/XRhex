@@ -314,6 +314,27 @@ classdef XRhex
         
         function flipRobot(robot)
             %starts right side up and flips
+            %requires smooth surface
+            
+            
+           %center of wheel starts:
+           %3 7/8 (touching wall) - front edge of front tape, (unreliable,
+           %limit)
+           %5 7/8, 6 inches inches from wall - front edge of 5.75 tape (unreliable) 
+           %6 5/8 inches from wall - back edge of 5.75 tape
+           %do not have multiple trials after this point
+           % 7 inches - front edge of 7 inch tape
+           %7 3/4 - back edge of 7 inch tape
+           %9 5/8 - front edge of 9 and 5/8 tape
+           %10 3/8 - back edge of 9 and 5/8 tape
+           %11 1/4 - front edge of 11.25 tape
+           % 12 inches - back edge of 11.25 tape
+           %13.75 - back edge of 13 inch tape
+           %13 inches - front edge of 13 inch tape
+           %14 1/2 - front edge of 14 inch tape
+           %15 3/8 - back edge of 14 inch tape
+           %17 1/8 approx - front edge of 17 3/8 tape
+           %18 1/4 approx - front edge of 18 1/4 tape - UNRELIABLE, LIMIT
            
              %crouches with front legs up - front legs need to be back more
             robot.fbk = robot.group.getNextFeedback();
@@ -357,11 +378,7 @@ classdef XRhex
           pos1 = curPos+[7*pi/4, 0, 0, 0, 0, 7*pi/4]; %-pi/2 means its resting on the pads
           robot.moveLegsToPos(pos1);   
           
-          %push up FAST
-           robot.fbk = robot.group.getNextFeedback();
-           curPos = robot.fbk.position.*robot.directionFlip;
-           pos1 = curPos+[0, 0, -3*pi/4, -3*pi/4, 0, 0]; 
-           robot.moveLegsToPos(pos1);
+   
            
            %right position but too slow
            %robot.fbk = robot.group.getNextFeedback();
