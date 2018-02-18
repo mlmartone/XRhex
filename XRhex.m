@@ -317,7 +317,8 @@ classdef XRhex
             %requires smooth surface
             
             stepTime = 3;
-            %eight work
+            %3-8 work, have not tested upper or lower limits beyond that
+            %if three, can remove goalPos?
                        
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
@@ -338,19 +339,20 @@ classdef XRhex
            
           pos6 = pos5+[7*pi/4; 0; 0; 0; 0; 7*pi/4]; 
           %-pi/2 means its resting on the pads
+          
 
           
          stepPoints = [pos2, pos3, pos4, pos5, pos6]; %commas
          stepTimes = linspace(0,stepTime,size(stepPoints,2)); %was 2
-         speeds = zeros(6,5);
+         speeds = zeros(6,6);
         
             
           %Generate and execute the trajectory
          walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
          robot.followLegTraj(walkTraj,1,size(walkTraj,2));
             
-            
-          robot.standUpReverse();
+           robot.standUpReverse();
+        %  robot.standUpReverse();
    
         disp('Done Flipping: Remember to Switch to Upside-Down Mode');
         end

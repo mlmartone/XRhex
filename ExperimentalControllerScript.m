@@ -147,7 +147,7 @@ while true
         
         printInstructions(); 
         %can switch to button 1 -- add a comment
-        if(upsideDown == true)z
+        if(upsideDown == true)
         upsideDown = false;
         disp('Upside Down is');
         disp(upsideDown);
