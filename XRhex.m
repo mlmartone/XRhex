@@ -316,7 +316,8 @@ classdef XRhex
             %starts right side up and flips
             %requires smooth surface
             
-            stepTime = 8;
+            stepTime = 3;
+            %eight work
                        
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
@@ -324,8 +325,6 @@ classdef XRhex
             pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
             robot.moveLegsToPos(pos1');
             %this really needs to be out of the loop
-            
-            %need to add previous positioin for trajectories
             
            robot.fbk = robot.group.getNextFeedback();
            curPos = robot.fbk.position'.*robot.directionFlip';
