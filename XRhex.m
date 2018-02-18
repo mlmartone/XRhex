@@ -316,68 +316,56 @@ classdef XRhex
             %starts right side up and flips
             %requires smooth surface
             
-            
-           %center of wheel starts:
-           %3 7/8 (touching wall) - front edge of front tape, (unreliable,
-           %limit)
-           %5 7/8, 6 inches inches from wall - front edge of 5.75 tape (unreliable) 
-           %6 5/8 inches from wall - back edge of 5.75 tape
-           %do not have multiple trials after this point
-           % 7 inches - front edge of 7 inch tape
-           %7 3/4 - back edge of 7 inch tape
-           %9 5/8 - front edge of 9 and 5/8 tape
-           %10 3/8 - back edge of 9 and 5/8 tape
-           %11 1/4 - front edge of 11.25 tape
-           % 12 inches - back edge of 11.25 tape
-           %13.75 - back edge of 13 inch tape
-           %13 inches - front edge of 13 inch tape
-           %14 1/2 - front edge of 14 inch tape
-           %15 3/8 - back edge of 14 inch tape
-           %17 1/8 approx - front edge of 17 3/8 tape
-           %18 1/4 approx - front edge of 18 1/4 tape - UNRELIABLE, LIMIT
-           
-             %crouches with front legs up - front legs need to be back more
+            stepTime = 4;
+                       
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*robot.directionFlip;
-            pos = [pi/2 pi/2 pi/2 pi/2 pi/2 pi/2]; 
-            %originally, two middle ones were pi
-            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
-            robot.moveLegsToPos(pos);
-           
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos1');
+            %this really needs to be out of the loop
+            
+            %need to add previous positioin for trajectories
+            
            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*robot.directionFlip;
-            pos1 = curPos+[-pi, -pi, 0, 0, -pi, -pi]; 
-            robot.moveLegsToPos(pos1);
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
+            robot.moveLegsToPos(pos2');
             
-            %this "step" might be too big
-            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*robot.directionFlip;
-            pos1 = curPos+[0, pi/4, 0, 0, pi/4, 0]; 
-            robot.moveLegsToPos(pos1);
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos3 = curPos+[0; pi/4; 0; 0; pi/4; 0]; 
+           robot.moveLegsToPos(pos3');
+
 
            robot.fbk = robot.group.getNextFeedback();
-           curPos = robot.fbk.position.*robot.directionFlip;
-           pos1 = curPos+[0, pi/2, 0, 0, pi/2, 0]; 
-           robot.moveLegsToPos(pos1);
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos4 = curPos+[0; pi/2; 0; 0; pi/2; 0]; 
+           robot.moveLegsToPos(pos4');
            
-           %robot at nice tilt at this point
 
-            robot.fbk = robot.group.getNextFeedback();
-           curPos = robot.fbk.position.*robot.directionFlip;
-           pos1 = curPos+[pi/2, 0, 0, 0, 0, pi/2]; 
-           robot.moveLegsToPos(pos1);   
-           
-           %robot at steeper tilt at this point 
-            
-           %robot pushes itself rapidly upward
-           
-           %severe tilt but resting on its legs in a way that seems bad for
-           %the modules
            robot.fbk = robot.group.getNextFeedback();
-          curPos = robot.fbk.position.*robot.directionFlip;
-          pos1 = curPos+[7*pi/4, 0, 0, 0, 0, 7*pi/4]; %-pi/2 means its resting on the pads
-          robot.moveLegsToPos(pos1);   
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos5 = curPos+[pi/2; 0; 0; 0; 0; pi/2]; 
+           robot.moveLegsToPos(pos5');
+           
+          robot.fbk = robot.group.getNextFeedback();
+          curPos = robot.fbk.position'.*robot.directionFlip';
+          pos6 = curPos+[7*pi/4; 0; 0; 0; 0; 7*pi/4]; 
+          robot.moveLegsToPos(pos6');
+          %-pi/2 means its resting on the pads
+
           
+        %stepPoints = [pos3, pos4, pos5, pos6]; %commas
+         %stepTimes = linspace(0,stepTime,size(stepPoints,2)); %was 2
+         %speeds = zeros(6,4);
+        
+            
+          %Generate and execute the trajectory
+         %walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+         %robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+            
+            
           robot.standUpReverse();
    
         disp('Done Flipping: Remember to Switch to Upside-Down Mode');
