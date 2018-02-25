@@ -503,25 +503,10 @@ classdef XRhex
            robot.moveLegsToPos(pos8');
            %originally 3pi/2
            
-           %% Notes on Stairs
-           %http://www.centurygrp.com/Images/Interior/stair%20treads/
-           %internationalbuildingcodestairtreadsrisers.pdf 
-           
-           %Currently, the robot can go up the top two stairs and rest its
-           %bottom feet on the lower step. However, it cannot go up the
-           %upper stair, which means I cannot really test repeatability.
-           
-           %I have checked; the bottom two stairs are "to code" but on the
-           %smaller end. The top stair, however, is two inches too tall,
-           %which may be one of the reasons the robot cannot climb it.
-           
-           %Furthermore, the bottom stair is not to code for the width of
-           %the stair, which may mean the code is not accurate on real
-           %stairs.
-           
-           %Do with this as you will.
-           %%
-           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos1 = curPos + [0; 0; 5*pi/4; 5*pi/4; 0; 0];
+           robot.moveLegsToPos(pos1');
            
            disp('click enter to continue');
            pause();
