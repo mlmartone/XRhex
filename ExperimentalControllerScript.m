@@ -29,6 +29,7 @@ maxStepTime = 10;
 minStepSize = 0;
 maxStepSize = pi/3;
 upsideDown = false;
+stairs = false;
 
 %% Joystick Setup
 %Get joystick handle
@@ -58,7 +59,14 @@ while true
     %etc.
     %Step sizes allow for turning by altering steps on right and left
     %sides, bigger step disparities allow for sharper turns
-    if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait, upsideDown); end
+    if dpad == 0; 
+        if(stairs == true)
+          disp('going forward in stair mode');  
+          robot.takeStepStairs([stepSize stepSize],stepTime);         
+        else
+            robot.takeStep([stepSize stepSize],stepTime,gait, upsideDown); 
+        end
+    end
     if dpad == 45;
         robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait, upsideDown);
         %arc turn
@@ -94,7 +102,18 @@ while true
     %Move all legs to clock positions, mostly for debug purposes
     if buttons(1); robot.flipRobot(); end
     if buttons(2); robot.flipRobotReverse(); end
-    if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end
+    if buttons(3) && toc(lastTimeChange) > buttonIgnore;
+        lastTimeChange = tic;
+        if(stairs == false)
+         disp('stairs on');
+        robot.initializeStairs();
+        stairs = true;
+        disp('finished stairs initialization');
+        else
+        stairs = false;
+        disp('stairs off');
+        end
+    end
     if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end
     
     %Alter step parameters, prevent duplicate button presses

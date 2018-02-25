@@ -318,8 +318,7 @@ classdef XRhex
             
             stepTime = 3;
             %3-8 work, have not tested upper or lower limits beyond that
-            %if three, can remove goalPos?
-                       
+
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
             pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
@@ -329,6 +328,7 @@ classdef XRhex
             
            robot.fbk = robot.group.getNextFeedback();
            curPos = robot.fbk.position'.*robot.directionFlip';
+           
            pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
             
            pos3 = pos2+[0; pi/4; 0; 0; pi/4; 0]; 
@@ -338,22 +338,17 @@ classdef XRhex
            pos5 = pos4+[pi/2; 0; 0; 0; 0; pi/2]; 
            
           pos6 = pos5+[7*pi/4; 0; 0; 0; 0; 7*pi/4]; 
-          %-pi/2 means its resting on the pads
-          
 
-          
          stepPoints = [pos2, pos3, pos4, pos5, pos6]; %commas
          stepTimes = linspace(0,stepTime,size(stepPoints,2)); %was 2
          speeds = zeros(6,6);
-        
-            
+                
           %Generate and execute the trajectory
          walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
          robot.followLegTraj(walkTraj,1,size(walkTraj,2));
             
            robot.standUpReverse();
-        %  robot.standUpReverse();
-   
+
         disp('Done Flipping: Remember to Switch to Upside-Down Mode');
         end
         
@@ -373,6 +368,24 @@ classdef XRhex
            disp('Done Flipping: Remember to Switch to Normal Mode');
         end
         
+        function initializeStairs(robot)
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos1');
+            
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
+           robot.moveLegsToPos(pos2');
+           
+           %get rid of this? Originally, 2, 5 are pi/4
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos3 = curPos+[0; 0; 0; 0; 0; 0]; 
+           robot.moveLegsToPos(pos3');
+        end
         
          function waveGaitAdriana(robot,stepSize,stepTime)
              %DO NOT USE -- UNEXPECTED ERRORS
@@ -435,6 +448,46 @@ classdef XRhex
             %Generate and execute the trajectory
             walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+        end
+        
+        function takeStepStairs(robot, stepSize, stepTime)
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos1 = curPos + [0; 0; 5*pi/4; 0; 0; 0];
+           robot.moveLegsToPos(pos1');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos2 = curPos + [0; 0;0;  5*pi/4; 0; 0];
+           robot.moveLegsToPos(pos2');
+           %move back legs to push up, then just move front legs?
+           %move middle legs, after pushoff, out of the way?
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos3 = curPos + [pi/2; 0;0;  0; 0; pi/2];
+           robot.moveLegsToPos(pos3');
+           %move back legs to push up, then just move front legs?
+           %move middle legs, after pushoff, out of the way?
+           
+                    
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos4 = curPos + [0; 0; pi/2; pi/2; 0; 0];
+           robot.moveLegsToPos(pos4');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos5 = curPos + [0; 0; pi/4; pi/4; 0; 0];
+           robot.moveLegsToPos(pos5');
+           
+            
+           
+           %or scroll through, make the middle do the step until 
+           %back legs are on the back step
+           disp('click enter to continue');
+           pause();
+           disp('finished with takeStepStairs');
         end
         
         %Moves the robot forward by one step using the tripod gait
