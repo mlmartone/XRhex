@@ -451,6 +451,9 @@ classdef XRhex
         end
         
         function takeStepStairs(robot, stepSize, stepTime)
+           
+           robot.initializeStairs();
+            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
            pos1 = curPos + [0; 0; 5*pi/4; 5*pi/4; 0; 0];
@@ -477,7 +480,8 @@ classdef XRhex
            pos5 = curPos + [0; 0; 5*pi/4; 5*pi/4; 0; 0];
            robot.moveLegsToPos(pos5');
            
-           %%%
+           %Robot is at a good position here, cleaning on the first two
+           %steps but not on the last one
                    
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
@@ -502,6 +506,8 @@ classdef XRhex
            pos8 = curPos + [0; 7*pi/4; 0; 0; 7*pi/4; 0];
            robot.moveLegsToPos(pos8');
            %originally 3pi/2
+
+           
            
            %% Notes on Stairs
            %http://www.centurygrp.com/Images/Interior/stair%20treads/
@@ -521,7 +527,6 @@ classdef XRhex
            
            %Do with this as you will.
            %%
-           
            
            disp('click enter to continue');
            pause();

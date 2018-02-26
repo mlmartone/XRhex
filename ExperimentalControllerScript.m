@@ -106,7 +106,7 @@ while true
         lastTimeChange = tic;
         if(stairs == false)
          disp('stairs on');
-        robot.initializeStairs();
+        %robot.initializeStairs();
         stairs = true;
         disp('finished stairs initialization');
         else
