@@ -317,70 +317,39 @@ classdef XRhex
             %starts right side up and flips
             %requires smooth surface
             
-            
-           %center of wheel starts:
-           %3 7/8 (touching wall) - front edge of front tape, (unreliable,
-           %limit)
-           %5 7/8, 6 inches inches from wall - front edge of 5.75 tape (unreliable) 
-           %6 5/8 inches from wall - back edge of 5.75 tape
-           %do not have multiple trials after this point
-           % 7 inches - front edge of 7 inch tape
-           %7 3/4 - back edge of 7 inch tape
-           %9 5/8 - front edge of 9 and 5/8 tape
-           %10 3/8 - back edge of 9 and 5/8 tape
-           %11 1/4 - front edge of 11.25 tape
-           % 12 inches - back edge of 11.25 tape
-           %13.75 - back edge of 13 inch tape
-           %13 inches - front edge of 13 inch tape
-           %14 1/2 - front edge of 14 inch tape
-           %15 3/8 - back edge of 14 inch tape
-           %17 1/8 approx - front edge of 17 3/8 tape
-           %18 1/4 approx - front edge of 18 1/4 tape - UNRELIABLE, LIMIT
-           
-             %crouches with front legs up - front legs need to be back more
-            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*robot.directionFlip;
-            pos = [pi/2 pi/2 pi/2 pi/2 pi/2 pi/2]; 
-            %originally, two middle ones were pi
-            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
-            robot.moveLegsToPos(pos);
-           
-           robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*robot.directionFlip;
-            pos1 = curPos+[-pi, -pi, 0, 0, -pi, -pi]; 
-            robot.moveLegsToPos(pos1);
-            
-            %this "step" might be too big
-            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*robot.directionFlip;
-            pos1 = curPos+[0, pi/4, 0, 0, pi/4, 0]; 
-            robot.moveLegsToPos(pos1);
-
-           robot.fbk = robot.group.getNextFeedback();
-           curPos = robot.fbk.position.*robot.directionFlip;
-           pos1 = curPos+[0, pi/2, 0, 0, pi/2, 0]; 
-           robot.moveLegsToPos(pos1);
-           
-           %robot at nice tilt at this point
+            stepTime = 3;
+            %3-8 work, have not tested upper or lower limits beyond that
 
             robot.fbk = robot.group.getNextFeedback();
-           curPos = robot.fbk.position.*robot.directionFlip;
-           pos1 = curPos+[pi/2, 0, 0, 0, 0, pi/2]; 
-           robot.moveLegsToPos(pos1);   
-           
-           %robot at steeper tilt at this point 
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos1');
+            %this really needs to be out of the loop
             
-           %robot pushes itself rapidly upward
-           
-           %severe tilt but resting on its legs in a way that seems bad for
-           %the modules
            robot.fbk = robot.group.getNextFeedback();
-          curPos = robot.fbk.position.*robot.directionFlip;
-          pos1 = curPos+[7*pi/4, 0, 0, 0, 0, 7*pi/4]; %-pi/2 means its resting on the pads
-          robot.moveLegsToPos(pos1);   
-          
-          robot.standUpReverse();
-   
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           
+           pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
+            
+           pos3 = pos2+[0; pi/4; 0; 0; pi/4; 0]; 
+
+           pos4 = pos3+[0; pi/2; 0; 0; pi/2; 0]; 
+           
+           pos5 = pos4+[pi/2; 0; 0; 0; 0; pi/2]; 
+           
+          pos6 = pos5+[7*pi/4; 0; 0; 0; 0; 7*pi/4]; 
+
+         stepPoints = [pos2, pos3, pos4, pos5, pos6]; %commas
+         stepTimes = linspace(0,stepTime,size(stepPoints,2)); %was 2
+         speeds = zeros(6,6);
+                
+          %Generate and execute the trajectory
+         walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+         robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+            
+           robot.standUpReverse();
+
         disp('Done Flipping: Remember to Switch to Upside-Down Mode');
         end
         
@@ -400,6 +369,24 @@ classdef XRhex
            disp('Done Flipping: Remember to Switch to Normal Mode');
         end
         
+        function initializeStairs(robot)
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos1');
+            
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
+           robot.moveLegsToPos(pos2');
+           
+           %get rid of this? Originally, 2, 5 are pi/4
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos3 = curPos+[0; 0; 0; 0; 0; 0]; 
+           robot.moveLegsToPos(pos3');
+        end
         
          function waveGaitAdriana(robot,stepSize,stepTime)
              %DO NOT USE -- UNEXPECTED ERRORS
@@ -462,6 +449,89 @@ classdef XRhex
             %Generate and execute the trajectory
             walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+        end
+
+        function takeStepStairs(robot, stepSize, stepTime)
+           
+           robot.initializeStairs();
+            
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos1 = curPos + [0; 0; 5*pi/4; 5*pi/4; 0; 0];
+           robot.moveLegsToPos(pos1');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos2 = curPos + [0; 0; pi/2; pi/2; 0; 0];
+           robot.moveLegsToPos(pos2');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos3 = curPos + [0; pi/4; pi/4; pi/4; pi/4; 0];
+           robot.moveLegsToPos(pos3');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos4 = curPos + [pi/2; 0; 0; 0; 0; pi/2];
+           robot.moveLegsToPos(pos4');
+           
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos5 = curPos + [0; 0; 5*pi/4; 5*pi/4; 0; 0];
+           robot.moveLegsToPos(pos5');
+           
+           %Robot is at a good position here, cleaning on the first two
+           %steps but not on the last one
+                   
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos6 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
+           robot.moveLegsToPos(pos6');
+          
+          robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos7 = curPos + [pi/4; pi/2; pi/2; pi/2; pi/2; pi/4];
+           robot.moveLegsToPos(pos7');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos8 = curPos + [3*pi/2; 0; 0; 0; 0; 3*pi/2];
+           robot.moveLegsToPos(pos8');
+           
+           %%% The top step is a little big, it seems like a repeat of the
+           %%% above code should have worked...
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos8 = curPos + [0; 7*pi/4; 0; 0; 7*pi/4; 0];
+           robot.moveLegsToPos(pos8');
+           %originally 3pi/2
+
+           
+           
+           %% Notes on Stairs
+           %http://www.centurygrp.com/Images/Interior/stair%20treads/
+           %internationalbuildingcodestairtreadsrisers.pdf 
+           
+           %Currently, the robot can go up the top two stairs and rest its
+           %bottom feet on the lower step. However, it cannot go up the
+           %upper stair, which means I cannot really test repeatability.
+           
+           %I have checked; the bottom two stairs are "to code" but on the
+           %smaller end. The top stair, however, is two inches too tall,
+           %which may be one of the reasons the robot cannot climb it.
+           
+           %Furthermore, the bottom stair is not to code for the width of
+           %the stair, which may mean the code is not accurate on real
+           %stairs.
+           
+           %Do with this as you will.
+           %%
+           
+           disp('click enter to continue');
+           pause();
+           disp('finished with takeStepStairs');
         end
         
         %Sends a square wave to the motors to dynamically run
