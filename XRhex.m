@@ -316,6 +316,80 @@ classdef XRhex
             %starts right side up and flips
             %requires smooth surface
             
+            stepTime = 7;
+            %3-6 work, have not tested upper or lower limits beyond that
+            %3 is good
+            
+ 
+
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2;0; 0;0; 0; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+          %robot.moveLegsToPos(pos1');
+            
+           posA = pos1 + [0; pi/2; 0; 0; pi/2; 0];  
+          %robot.moveLegsToPos(posA');
+           
+           posB = posA + [0; 0; pi/2; pi/2; 0; 0];  
+          %robot.moveLegsToPos(posB');
+           
+           posC = posB + [0; 0; 0; 0; 0; 0];  
+          %robot.moveLegsToPos(posC');
+           
+          %error is around here
+           posD = posC + [pi; 0; 0; 0; 0; pi];
+          %robot.moveLegsToPos(posD');
+           %originally -pi
+           
+           pos2 = posD+[0; pi; 0; 0; pi; 0]; 
+          %robot.moveLegsToPos(pos2');
+          
+           pos3 = pos2+[0; pi/4; 0; 0; pi/4; 0];
+            %robot.moveLegsToPos(pos3');
+
+           pos4 = pos3+[0; pi/2; 0; 0; pi/2; 0]; 
+           %robot.moveLegsToPos(pos4');
+           
+           pos5 = pos4+[pi/2; 0; 0; 0; 0; pi/2]; 
+           %robot.moveLegsToPos(pos5');
+           
+           pos6 = pos5+[7*pi/4; 0; 0; 0; 0; 7*pi/4]; 
+           %robot.moveLegsToPos(pos6');
+
+       stepPoints = [pos1, posA, posB, posC, posD, pos2, pos3, pos4, pos5, pos6]; %commas
+       stepTimes = linspace(0,stepTime,size(stepPoints,2)); %was 2
+       speeds = zeros(6,10);
+                
+          %Generate and execute the trajectory
+       walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+       robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+            
+           %robot.standUpReverse();
+
+        disp('Done Flipping: Remember to Switch to Upside-Down Mode');
+        end
+        
+      function flipRobotReverse(robot)
+            %starts upside-down and flips
+            %requires smooth surface
+            
+            %crouches with front legs up - front legs need to be back more
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position.*robot.directionFlip;
+            pos = [-3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2]; 
+            %originally, two middle ones were pi
+            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.biDirMoveLegsToPos(pos);
+            
+            
+           disp('Done Flipping: Remember to Switch to Normal Mode');
+      end
+        
+        function safeFlipRobot(robot)
+            %starts right side up and flips
+            %requires smooth surface
+            
             stepTime = 3;
             %3-8 work, have not tested upper or lower limits beyond that
 
@@ -350,22 +424,6 @@ classdef XRhex
            robot.standUpReverse();
 
         disp('Done Flipping: Remember to Switch to Upside-Down Mode');
-        end
-        
-      function flipRobotReverse(robot)
-            %starts upside-down and flips
-            %requires smooth surface
-            
-            %crouches with front legs up - front legs need to be back more
-            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position.*robot.directionFlip;
-            pos = [-3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2 -3*pi/2]; 
-            %originally, two middle ones were pi
-            pos = mod(pos,2*pi)+floor(curPos/(2*pi))*2*pi;
-            robot.biDirMoveLegsToPos(pos);
-            
-            
-           disp('Done Flipping: Remember to Switch to Normal Mode');
         end
         
         function initializeStairs(robot)
@@ -451,7 +509,10 @@ classdef XRhex
         end
         
         function takeStepStairs(robot, stepSize, stepTime)
-           
+            
+            %pose estimation
+            
+            
            robot.initializeStairs();
             
            robot.fbk = robot.group.getNextFeedback;

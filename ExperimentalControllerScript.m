@@ -114,7 +114,7 @@ while true
         disp('stairs off');
         end
     end
-    if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end
+    if buttons(4); robot.safeFlipRobot(); end
     
     %Alter step parameters, prevent duplicate button presses
     if buttons(5) && toc(lastTimeChange) > buttonIgnore;
