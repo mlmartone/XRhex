@@ -7,36 +7,42 @@ classdef (Sealed) HebiGroup < handle
     %
     %   HebiGroup Methods (configuration):
     %   getNumModules        - returns the number of grouped modules
-    %   getFeedbackFrequency - returns the current feedback request rate
     %   setFeedbackFrequency - sets the feedback request rate
-    %   getCommandLifetime   - returns the current command lifetime
     %   setCommandLifetime   - sets the command lifetime
     %
     %   HebiGroup Methods (common):
     %   getGains             - returns the current gains
     %   getInfo              - returns meta information such as names
     %   getNextFeedback      - returns the next new synchronized feedback
-    %   set                  - sends synchronized commands and settings
+    %   send                 - sends synchronized commands
     %   startLog             - starts background logging to disk
     %   stopLog              - stops logging and returns a readable format
     %
     %   Example
-    %      % 100 Hz loop commanding of the current position
-    %      group.setFeedbackFrequency(100);
-    %      cmd = CommandStruct()
+    %      % 200 Hz loop commanding of the current position
+    %      group.setFeedbackFrequency(200);
+    %      cmd = CommandStruct();
     %      group.startLog();
-    %      tic
-    %      while(toc < 5)
+    %      t0 = tic();
+    %      while toc(t0) < 5 
     %          fbk = group.getNextFeedback();
     %          cmd.position = fbk.position;
-    %          group.set(cmd);
+    %          group.send(cmd);
     %      end
     %      log = group.stopLog();
-    %      plot(log.time, log.position);
     %
-    %   See also HebiLookup
+    %      % Plotting the commanded / feedback positions
+    %      plot(log.time, log.position);
+    %      hold on;
+    %      plot(log.time, log.positionCmd, '--');
+    %      hold off;
+    %      xlabel('time (sec)');
+    %      ylabel('position (rad)');
+    %      legend(group.getInfo.name); 
+    %
+    %   See also HebiLookup, send, getInfo, startLog, getNextFeedback.
     
-    %   Copyright 2014-2016 HEBI Robotics, LLC.
+    %   Copyright 2014-2017 HEBI Robotics, Inc.
     
     % Public API
     methods(Access = public)
@@ -45,10 +51,12 @@ classdef (Sealed) HebiGroup < handle
             %getNumModules  returns the number of modules within a group.
             %
             %   Example
-            %      % Command all-zero torques
+            %      % Command all-zero efforts
             %      cmd = CommandStruct()
-            %      cmd.torque = zeros(1, group.getNumModules())
-            %      group.set(cmd);
+            %      cmd.effort = zeros(1, group.getNumModules())
+            %      group.send(cmd);
+            % 
+            %   See also HebiLookup, getInfo.
             out = getNumModules(this.obj, varargin{:});
         end
         
@@ -65,13 +73,13 @@ classdef (Sealed) HebiGroup < handle
             %
             %   Example
             %      % Estimate the 'real' incoming feedback frequency
-            %      double targetFrequency = 100; % [Hz]
-            %      double pauseTime = 10; % [s]
+            %      targetFrequency = 100; % [Hz]
+            %      pauseTime = 10; % [s]
             %      group.setFeedbackFrequency(targetFrequency);
             %      group.startLog();
             %      pause(pauseTime);
             %      log = group.stopLog();
-            %      double realFrequency = length(log.time) / pauseTime;
+            %      realFrequency = length(log.time) / pauseTime;
             %
             %   See also HebiGroup, setFeedbackFrequency
             out = getFeedbackFrequency(this.obj, varargin{:});
@@ -89,13 +97,13 @@ classdef (Sealed) HebiGroup < handle
             %
             %   Example
             %      % Estimate the 'real' incoming feedback frequency
-            %      double targetFrequency = 100; % [Hz]
-            %      double pauseTime = 10; % [s]
+            %      targetFrequency = 100; % [Hz]
+            %      pauseTime = 10; % [s]
             %      group.setFeedbackFrequency(targetFrequency);
             %      group.startLog();
             %      pause(pauseTime);
             %      log = group.stopLog();
-            %      double realFrequency = length(log.time) / pauseTime;
+            %      realFrequency = length(log.time) / pauseTime;
             %
             %   See also HebiGroup, getFeedbackFrequency
             setFeedbackFrequency(this.obj, varargin{:});
@@ -106,6 +114,20 @@ classdef (Sealed) HebiGroup < handle
             %
             %   This method provides a way to programmatically access 
             %   the current command lifetime.
+            %
+            %   The command lifetime is the duration for which a sent 
+            %   command remains active. If the hardware does not receive
+            %   further commands within the specified time frame, all local
+            %   controllers get deactivated. This is a safety feature
+            %   to mitigate the risk of accidents in case programs get
+            %   interrupted in an unsafe state, e.g., on user interrupts
+            %   (ctrl+c) or during a network fault.
+            %
+            %   Additionally, supporting hardware does not accept commands
+            %   from any other sources during the lifetime of a command.
+            %   This mitigates the risk of other users accidentally sending
+            %   conflicting targets from, e.g., the GUI, or any other groups
+            %   running in Matlab or from any other APIs.
             %
             %   See also HebiGroup, setCommandLifetime
             out = getCommandLifetime(this.obj, varargin{:});
@@ -125,12 +147,13 @@ classdef (Sealed) HebiGroup < handle
             %   Additionally, supporting hardware does not accept commands
             %   from any other sources during the lifetime of a command.
             %   This mitigates the risk of other users accidentally sending
-            %   conflicting targets from, e.g., the GUI.
+            %   conflicting targets from, e.g., the GUI, or any other groups
+            %   running in Matlab or from any other APIs.
             %
             %   This feature can be disabled by setting zero or the empty
             %   matrix []. When disabled, the hardware will continue to
             %   execute the last sent command. Note that this can result in
-            %   unexpected behavior when sending torques and velocities.
+            %   unexpected behavior when sending efforts and velocities.
             %
             %   Example
             %      % Stop motions if hardware does not receive commands at
@@ -141,27 +164,35 @@ classdef (Sealed) HebiGroup < handle
             setCommandLifetime(this.obj, varargin{:});
         end
         
-        function [] = set(this, varargin)
-            %set sends commands and settings to modules.
+        function [] = send(this, varargin)
+            %send sends commands and settings to modules.
             %
             %   This method provides a variety of selectors to send commands, gains,
             %   LEDs, as well as a several useful settings and flags. This method returns
             %   immediately and does not wait until outgoing packets have arrived at
             %   the receiving modules.
             %
+            %   'Boot' boots a module from bootloader mode into application
+            %   mode. It expects a boolean value (true will boot) and can
+            %   only be used in supported modes (e.g. bootloader mode).
+            %
             %   'Command' ('cmd') is used to send common control loop set points
-            %   such as positions, velocities, or torques. It expects a CommandStruct.
+            %   such as positions, velocities, or efforts. It expects a CommandStruct.
             %   If struct fields are empty or filled with NaN, the underlying control
             %   is disabled. For the common use case (set CommandStruct), the flag can
-            %   be omitted.
+            %   be omitted (both valid use cases are shown below).
             %
             %   Example
-            %      % enable/disable velocity control
+            %      % Enable/disable velocity control
             %      cmd = CommandStruct();
             %      cmd.velocity = zeros(1, group.getNumModules);
-            %      group.set('cmd', cmd); % enable
+            %      t0 = tic;
+            %      while toc(t0) < 5
+            %          fbk = group.getNextFeedback: % limit loop rate
+            %          group.send('cmd', cmd); 
+            %      end 
             %      cmd.velocity = [];
-            %      group.set(cmd); % disable (omit flag)
+            %      group.send(cmd);
             %
             %   'IoCommand' ('IoCmd') is used to send pin commands to supporting
             %   modules, e.g., I/O boards. It expects an IoCommandStruct. Fields that
@@ -174,7 +205,7 @@ classdef (Sealed) HebiGroup < handle
             %      % set digital pin to 1
             %      ioCmd = IoCommandStruct();
             %      ioCmd.(selectedPin) = 1;
-            %      group.set(ioCmd);
+            %      group.send(ioCmd);
             %
             %   'Gains' sets control loop gains. Note that there are many tuning
             %   parameters that depend on the used control strategy. If you need
@@ -182,23 +213,23 @@ classdef (Sealed) HebiGroup < handle
             %   previously persisted gains.
             %
             %   Example
-            %      % set torque limits of +/- 1.5 Nm
+            %      % set effort limits of +/- 1.5 Nm|N
             %      n = group.getNumModules();
             %      limit = 1.5;
             %      gains = GainStruct();
-            %      gains.torqueMaxOutput = ones(1,n) * limit;
-            %      gains.torqueMinOutput = ones(1,n) * -limit;
-            %      group.set('gains', gains);
+            %      gains.effortMaxOutput = ones(1,n) * limit;
+            %      gains.effortMinOutput = ones(1,n) * -limit;
+            %      group.send('gains', gains);
             %
-            %   'Led' sets the led color. This is often useful when synchronizing video
+            %   'LED' sets the led color. This is often useful when synchronizing video
             %   to feedback and for timing analysis in combination with a high-speed
             %   camera. Colors can be set identically for all modules, or individually
             %   for each module. The string mappings can be found in 'help plot'.
             %
             %   Example
-            %      group.set('led', 'red'); % set all to red
-            %      group.set('led', [0 0 1]); % set all to blue [r g b] [0-1]
-            %      group.set('led', []); % reset to default mode
+            %      group.send('led', 'red'); % set all to red
+            %      group.send('led', [0 0 1]); % set all to blue [r g b] [0-1]
+            %      group.send('led', []); % reset to default mode
             %
             %   'Name' sets the names for individual modules. It expects a {1xN cell}
             %   array of module names, where N is the number of modules in a group.
@@ -219,17 +250,34 @@ classdef (Sealed) HebiGroup < handle
             %   'PositionLimit' ('PosLim') sets safety limits for position.
             %   Safety limits act as a virtual hard stop and are independent of gains.
             %
+            %   'ReferencePosition' sets the current position (feedback) by adjusting
+            %   the user-settable reference point for the zero position. This persists
+            %   automatically. This is the same as setting the reference point for
+            %   Position in the 'Device' tab of the Scope GUI.
+            %
+            %   'ReferenceEffort' sets the current effort (feedback) by adjusting
+            %   the user-settable reference point for zero effort. This persists
+            %   automatically.  This is the same as setting the reference point
+            %   for Effort in the 'Device' tab of the Scope GUI.
+            %
+            %   'SpringConstant' sets the internal stiffness parameter for an actuator
+            %   that is used to turn its sensed spring deflection into an estimated 
+            %   effort (torque). This is a linear spring constant, units are Nm/rad. 
+            %   The current spring constant can be determined by getting a 'full' 
+            %   feedback and dividing the -torque by the measured deflection 
+            %   (-1 * fbk.torque ./ fbk.deflection).
+            %
             %   Note that all options can be combined as required. Options that get set
             %   in the same function call will be packed into the same outgoing packet.
             %
             %   Example
             %      % Indicate with led that family has been set
-            %      group.set('family', 'MyRobot', 'led', 'r');
+            %      group.send('family', 'MyRobot', 'led', 'r');
             %
             %   See also HebiGroup, CommandStruct, GainStruct
-            set(this.obj, varargin{:});
+            send(this.obj, varargin{:});
         end
-        
+              
         function out = get(this, varargin)
             %get returns a variety of data structs
             %
@@ -321,7 +369,7 @@ classdef (Sealed) HebiGroup < handle
             %      end
             %
             %   See also HebiGroup, getFeedbackFrequency, getNextFeedbackFull,
-            %   getNextFeedbackIO
+            %   getNextFeedbackIO.
             out = getNextFeedback(this.obj, varargin{:});
         end
         
@@ -336,9 +384,9 @@ classdef (Sealed) HebiGroup < handle
             %   Example
             %      % Find the network round trip time
             %      fbk = group.getNextFeedbackFull()
-            %      rtt = fbk.pcRxTime - fbk.pcTxTime;
+            %      roundTripTime = fbk.pcRxTime - fbk.pcTxTime;
             %
-            %   See also HebiGroup, getNextFeedback
+            %   See also HebiGroup, getNextFeedback.
             out = getNextFeedbackFull(this.obj, varargin{:});
         end
 
@@ -355,7 +403,7 @@ classdef (Sealed) HebiGroup < handle
             %      fbk = group.getNextFeedbackIO()
             %      value = fbk.a1;
             %
-            %   See also HebiGroup, getNextFeedback
+            %   See also HebiGroup, getNextFeedback.
             out = getNextFeedbackIO(this.obj, varargin{:});
         end
         
@@ -380,9 +428,9 @@ classdef (Sealed) HebiGroup < handle
             %      % Double position kp gains on all modules
             %      gains = group.getGains()
             %      gains.positionKp = gains.positionKp * 2;
-            %      group.set('gains', gains);
+            %      group.send('gains', gains);
             %
-            %   See also HebiGroup, HebiLookup.setLookupFrequency
+            %   See also HebiGroup, HebiLookup.setLookupFrequency.
             out = getGains(this.obj, varargin{:});
         end
         
@@ -412,7 +460,7 @@ classdef (Sealed) HebiGroup < handle
             %      % Display the lookup polling rate
             %      HebiLookup
             %
-            %   See also HebiGroup, HebiLookup.setLookupFrequency
+            %   See also HebiGroup, HebiLookup.setLookupFrequency.
             out = getInfo(this.obj, varargin{:});
             if ~isempty(out) % convert struct to table
                 out = struct(out);
@@ -464,7 +512,7 @@ classdef (Sealed) HebiGroup < handle
             %       plot(log.time, log.position);
             %
             %   See also HebiGroup, stopLog, stopLogFull, stopLogIO,
-            %   HebiUtils.convertGroupLog
+            %   HebiUtils.convertGroupLog.
             out = startLog(this.obj, varargin{:});
         end
         
@@ -485,6 +533,10 @@ classdef (Sealed) HebiGroup < handle
             %               result in out-of-memory errors. (default)
             %      'Csv'    converts data to a CSV file
             %      'Mat'    converts data to a MAT file
+            %      'Raw'    returns the path to the raw .hebilog file and 
+            %               does not perform any format conversion. This
+            %               is useful when you do not want there to be any
+            %               pauses or hangs due to log conversion.
             %
             %   'View' Parameter
             %      'Simple' converts only simple feedback. This is appropriate
@@ -514,7 +566,7 @@ classdef (Sealed) HebiGroup < handle
             %       xlabel('time [s]');
             %       title('Logged Positions')
             %
-            %   See also HebiGroup, startLog, stopLogFull, stopLogIO
+            %   See also HebiGroup, startLog, stopLogFull, stopLogIO.
             out = stopLog(this.obj, varargin{:});
             
             % stop log should only be called in non-time critical sections,
@@ -551,7 +603,7 @@ classdef (Sealed) HebiGroup < handle
             %   access to the state of pins on an I/O board, as well as
             %   hardware timestamps.
             %
-            %   See also HebiGroup, stopLog
+            %   See also HebiGroup, stopLog.
             out = stopLogIO(this.obj, varargin{:});
 
             % stop log should only be called in non-time critical sections,
@@ -591,6 +643,13 @@ classdef (Sealed) HebiGroup < handle
             disp(this.obj);
         end
         
+        function [] = set(this, varargin)
+            %set forwards to 'send' and exists for backwards compatibility
+            %
+            %   See also send
+            send(this.obj, varargin{:});
+        end
+        
         % Inherited methods that we don't want to see in
         % auto-complete or docs
         function varargout = addlistener(varargin)
@@ -613,6 +672,9 @@ classdef (Sealed) HebiGroup < handle
         end
         function varargout = le(varargin)
             varargout{:} = le@handle(varargin{:});
+        end
+        function varargout = listener(varargin)
+            varargout{:} = listener@handle(varargin{:});
         end
         function varargout = lt(varargin)
             varargout{:} = lt@handle(varargin{:});

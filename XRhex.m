@@ -3,7 +3,7 @@
 %Updated 10/29/17
 classdef XRhex
     properties
-        maxErr = .1; %rad
+        maxErr = .05; %rad
         %ADD SOMETHING HERE TO PREVENT SPINOUTS (INSTEAD OF MAXERR)
         freq = 100; %Hz
         pauseTime = 1/(2*100); %s
@@ -199,7 +199,8 @@ classdef XRhex
                     robot.takeStepTripod(stepSize,stepTime,upsideDown);
                 case 'wave'
                     %prevents it from pulling both values and shorting out
-                    robot.waveGaitAdriana(stepSize, stepTime);
+                    robot.takeStepWave(stepSize,stepTime);
+                    %robot.waveGaitAdriana(stepSize, stepTime);
             end
         end
         
@@ -463,26 +464,38 @@ classdef XRhex
             robot.followLegTraj(walkTraj,1,size(walkTraj,2));
         end
         
-        %Moves the robot forward by one step using the tripod gait
-        function takeStepTripodRun(robot,stepSize,stepTime)
-            %Generate the waypoints with timesteps for one step
+        %Sends a square wave to the motors to dynamically run
+        function dynamicRun(robot,stepSize,speed)
+            %Speed is a decimal 0-1
+            %Calculate velocities needed for step
+            maxVel = 9*speed;
+            stepTime = (2*pi-2*stepSize)/abs(maxVel);
+            minVel = 2*stepSize/stepTime*sign(speed);
             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*robot.directionFlip';
-            pos1 = 2*pi*round(curPos/(2*pi)) + ...
-                [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
-                2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
-            pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
-                2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
-                2*stepSize(2)];
-            stepPoints = [curPos,pos1,pos2];
-            stepTimes = linspace(0,stepTime,size(stepPoints,2));
-            %dTh = [stepPoints(:,2)-stepPoints(:,1)...
-            %stepPoints(:,3)-stepPoints(:,2)];
-            %dt = [stepTimes(2)-stepTimes(1) stepTimes(2)-stepTimes(1)];
-            speeds = ones(6,3)*1;%[zeros(6,1) dTh./repmat(dt,6,1)];
-            %Generate and execute the trajectory
-            walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
-            robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+            positions = mod(robot.fbk.position.*robot.directionFlip,2*pi);
+            onGround = (positions <= stepSize) + (positions >= 2*pi-stepSize);
+            %Proportional control for error adjustment within leg groups
+%             k_p = 1;
+%             tripod1Pos = sum(positions([1,3,5]))/3;
+%             if((tripod1Pos > stepSize) && (tripod1Pos < 2*pi-stepSize))
+%                 error = min([tripod1Pos*ones(1,3) - positions([1,3,5]); ...
+%                     2*pi+tripod1Pos*ones(1,3) - positions([1,3,5])]);
+%                 vel([1,3,5]) = vel([1,3,5])-k_p*error;
+%                 %stepPercent = (tripod1Pos-stepSize)/(2*pi-2*stepSize);
+%             end
+%             tripod2Pos = sum(positions([2,4,6]))/3;
+%             if((tripod2Pos > stepSize) && (tripod2Pos < 2*pi-stepSize))
+%                 error = min([tripod2Pos*ones(1,3) - positions([2,4,6]); ...
+%                     2*pi+tripod2Pos*ones(1,3) - positions([2,4,6])]);
+%                 vel([2,4,6]) = vel([2,4,6])-k_p*error;
+%                 %stepPercent = (tripod1Pos-stepSize)/(2*pi-2*stepSize);
+%             end
+            vel = onGround*minVel + ~onGround*maxVel;
+            %Set position commands to null for full velocity control
+            robot.cmd.position = [];
+            %Command first velocity vector
+            robot.cmd.velocity = vel.*robot.directionFlip;
+            robot.group.set(robot.cmd);
         end
         
         %Makes the robot crouch and jump forward using all 6 legs

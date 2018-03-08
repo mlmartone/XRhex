@@ -1,8 +1,15 @@
 classdef (Sealed) HebiKinematics
     % HebiKinematics provides basic kinematic methods for HEBI modules
     %
-    %   This API is still experimental and may change in minor revisions.
-    %   At the moment, only serial chains are supported.
+    %   This Kinematics API helps with calculating forwards kinematics and
+    %   inverse kinematics, Jacobians, as well as forces and torques to
+    %   compensate for accelerations due to gravity or dynamic motions.
+    %
+    %   Note that his API currently only supports serial chains. If you
+    %   work with a robot that has multiple limbs, such as a hexapod, we
+    %   recommend creating a cell array that contains a separate kinematic
+    %   object for each limb. The base frames can be set to the location of
+    %   the limb with respect to the chassis.
     %
     %   HebiKinematics Methods (setup):
     %      addBody               -  adds a body to the end of the chain
@@ -17,16 +24,17 @@ classdef (Sealed) HebiKinematics
     %      getForwardKinematics  -  calculates the configuration of bodies
     %      getJacobian           -  relates joint to body velocities
     %      getInverseKinematics  -  positions for a desired configuration
-    %      getGravCompTorques    -  compensates for gravitational accelerations
-    %      getDynamicCompTorques -  compensates for dynamic motions
+    %      getGravCompEfforts    -  compensates for gravitational accelerations
+    %      getDynamicCompEfforts -  compensates for accelerations due to motions
+    %      setPayload            -  sets a payload for effort compensation
     %
     %   Example
     %      % Setup a simple 3 dof arm made of X5 modules
     %      kin = HebiKinematics();
     %      kin.addBody('X5-9');
-    %      kin.addBody('X5Bracket');
+    %      kin.addBody('X5-LightBracket', 'mounting', 'right');
     %      kin.addBody('X5-4');
-    %      kin.addBody('X5Link', 'extension', 0.350, 'twist', pi/2);
+    %      kin.addBody('X5-Link', 'extension', 0.350, 'twist', pi/2);
     %      kin.addBody('X5-1');
     %
     %   Example
@@ -36,7 +44,7 @@ classdef (Sealed) HebiKinematics
     %
     %   See also HebiGroup
     
-    %   Copyright 2014-2016 HEBI Robotics, LLC.
+    %   Copyright 2014-2017 HEBI Robotics, Inc.
     
     % Public API
     methods(Access = public)
@@ -46,75 +54,108 @@ classdef (Sealed) HebiKinematics
             %
             %   This method creates a serial chain of bodies that describe
             %   the kinematic relation of a robot. A 'body' can be a rigid
-            %   link as well as a dynamic element.
+            %   link as well as a dynamic element. More detailed
+            %   documentation on body types and parameters can be found at:
+            %   http://docs.hebi.us/core_concepts.html#kinematics
             %
             %   The 'Type' argument specifies the type of module or body
             %   that should be added. Currently implemented types include:
             %
-            %       'FieldableElbowJoint'
-            %       'FieldableElbowLink'    (ext1,twist1,ext2,twist2)
-            %       'FieldableStraightLink' (ext,twist)
-            %       'FieldableGripper'
-            %       'X5-9'
-            %       'X5-4'
+            %     X-Series Types            Required Parameters
             %       'X5-1'
-            %       'X5Bracket'
-            %       'X5Link'                (ext,twist)
-            %       'GenericLink'           (com,out,mass)
+            %       'X5-4'
+            %       'X5-9'
+            %       'X8-3'
+            %       'X8-9'
+            %       'X8-16'
+            %       'X5-Link'               (Extension, Twist)
+            %       'X5-LightBracket'       (Mounting)
+            %       'X5-HeavyBracket'       (Mounting)
+            %
+            %     S-Series Types
+            %       'S5-3'
+            %       'S5-Gripper'
+            %       'S5-Link'               (Extension, Twist)
+            %       'S5-ElbowLink'          (Extension, Twist, 
+            %                                Extension2, Twist2)
+            %
+            %     Custom Types
+            %       'GenericJoint'          (Axis)
+            %       'GenericLink'           (CoM, OutputTransform, Mass )
             %
             %   Some types may require a set of parameters. Parameters
             %   that are not required by the specified type are ignored.
-            %   Potential parameters include:
+            %   Potential kinematic parameters include:
             %
-            %       Parameter          Size    Units     Synonyms
-            %       'Extension'        1x1     [m]       ('ext','ext1')
-            %       'Extension2'       1x1     [m]       ('ext2')
-            %       'Twist'            1x1     [rad]     ('twist1')
+            %       Parameter          Size    Units      Synonyms
+            %       'Extension'        1x1     [m]        ('ext','ext1')
+            %       'Extension2'       1x1     [m]        ('ext2')
+            %       'Twist'            1x1     [rad]      ('twist1')
             %       'Twist2'           1x1     [rad]
             %       'Mass'             1x1     [kg]
             %       'CoM'              3x1     [m]
-            %       'Output'           4x4               ('out')
+            %       'Axis'             1x1     [x|y|z|rx|ry|rz]
+            %       'OutputTransform'  4x4                ('output','out')
+            %       'Mounting'         1x1     [left|...] ('mount')
             %
             %   Additionally, there are optional parameters that can be used
-            %   to overwrite default behavior. Joint limits are applicable
+            %   to control the behavior of joints when calculating inverse
+            %   kinematics with HEBIKINEMATICS, or generating trajectories 
+            %   with HEBITRAJECTORYGENERATOR. Joint limits are applicable
             %   to all joints and expect a [min max] vector without NaN.
             %
-            %       Parameter          Size    Units     Synonyms
-            %       'PositionLimit'    1x2     [rad|m]   ('PosLim')
-            %       'VelocityLimit'    1x2     [rad/s]   ('VelLim')
-            %       'TorqueLimit'      1x2     [Nm]      ('TorLim')
+            %       Parameter          Size    Units      Synonyms
+            %       'PositionLimit'    1x2     [rad|m]    ('PosLim')
+            %       'VelocityLimit'    1x2     [rad/s]    ('VelLim')
+            %       'EffortLimit'      1x2     [Nm|N]     ('EffLim')
             %       'Mass'             1x1     [kg]
             %
             %   Example
-            %      % Setup a common 4 dof 'Fieldable' arm
-            %      inch2m = 0.0254;
-            %      kin = HebiKinematics();
-            %      kin.addBody('FieldableElbowJoint');
-            %      kin.addBody('FieldableElbowJoint');
-            %      kin.addBody('FieldableElbowLink', ...
-            %          'ext1', 4 * inch2m, 'twist1', pi/2, ...
-            %          'ext2', 0.5 * inch2m, 'twist2', pi);
-            %      kin.addBody('FieldableElbowJoint');
-            %      kin.addBody('FieldableStraightLink', ...
-            %          'ext', 6 * inch2m, 'twist', -pi/2);
-            %      kin.addBody('FieldableElbowJoint');
-            %      kin.addBody('FieldableGripper');
-            %
-            %   Example
-            %      % Setup a common 5 dof 'X' arm
+            %      % Setup a common 5 DoF X-Series arm configuration
             %      kin = HebiKinematics();
             %      kin.addBody('X5-9', 'PosLim', [-pi +pi]);
-            %      kin.addBody('X5Bracket');
+            %      kin.addBody('X5-HeavyBracket', 'mount', 'right-outside');
             %      kin.addBody('X5-4');
-            %      kin.addBody('X5Link', 'ext', 0.350, 'twist', pi/2);
+            %      kin.addBody('X5-Link', 'ext', 0.350, 'twist', pi/2);
             %      kin.addBody('X5-4');
-            %      kin.addBody('X5Link', 'ext', 0.250, 'twist', pi/2);
+            %      kin.addBody('X5-Link', 'ext', 0.250, 'twist', pi/2);
             %      kin.addBody('X5-1');
-            %      kin.addBody('X5Bracket');
+            %      kin.addBody('X5-LightBracket', 'mount', 'right');
             %      kin.addBody('X5-1');
+            %
+            %   More information can be found at:
+            %   http://docs.hebi.us/core_concepts.html#kinematics
             %
             %   See also HebiKinematics
             addBody(this.obj, varargin{:});
+        end
+        
+        function this = setPayload(this, varargin)
+            % setPayload sets a payload used for effort compensation
+            %
+            %   This method provides a way to dynamically specify a payload
+            %   that gets used to calculate efforts to compensate for
+            %   gravitational effects and joint accelerations.
+            %
+            %   Specifying a payload has no effect on any other
+            %   functionality.
+            %
+            %   The 'Mass' argument (required) specifies the payload mass
+            %   in [kg].
+            %
+            %   The 'CoM' argument (parameter) specifies the distance from
+            %   the output to the center of mass of the payload. If left
+            %   unspecified, the default assumes that the payload is
+            %   located at the output of the end effector.
+            %   
+            %   Example
+            %       mass = 1; % [kg]
+            %       com = [1 0 0]; % 1 [m] in x
+            %       kin.setPayload(mass, 'CoM', com);
+            %
+            %   See also HebiKinematics, getGravCompEfforts, 
+            %   getDynamicCompEfforts
+            setPayload(this.obj, varargin{:});
         end
         
         function out = getNumBodies(this, varargin)
@@ -167,7 +208,7 @@ classdef (Sealed) HebiKinematics
             out = rmfield(out, {
                 'positionLimit' 
                 'velocityLimit' 
-                'torqueLimit'});
+                'effortLimit'});
             out = struct2table(out);
             out(end, :) = [];
         end
@@ -229,12 +270,13 @@ classdef (Sealed) HebiKinematics
         end
         
         function out = getForwardKinematics(this, varargin)
-            % getForwardKinematics calculates the pose of all the bodies in
-            % the kinematic configuration
+            % getForwardKinematics (getFK) calculates the poses of all the
+            % bodies in the configured kinematic chain, setup by using 
+            % HebiKinematics() and addBody()
             %
             %   This method computes the poses of the chain of bodies in 
-            %   the base frame, using specified values for the joint 
-            %   parameters.
+            %   the world frame, using specified values for the joint 
+            %   parameters and specified base frame.
             %
             %   Poses are returned as a set of [4 x 4 x numBodies] 
             %   homogeneous transforms, specified in the world frame of the
@@ -242,25 +284,36 @@ classdef (Sealed) HebiKinematics
             %   [m].
             %
             %   'FrameType' Argument
-            %      'Output'      calculates the transforms to the output
-            %                    of each body ('out')
-            %      'CoM'         calculates the transforms to the center of
-            %                    mass of each body
-            %      'EndEffector' calculates the transform to only the
-            %                    output frame of the last body, e.g.,
-            %                    a gripper
+            %      'OutputFrame'      calculates the transforms to the output
+            %                         of each body ('out')
+            %                         Size: [4 x 4 x numBodies]
+            %
+            %      'CoMFrame'         calculates the transforms to the center
+            %                         of mass of each body
+            %                         Size: [4 x 4 x numBodies]
+            %
+            %      'EndEffectorFrame' calculates the transform to only the
+            %                         output frame of the last body in the
+            %                         chain (e.g. a gripper or tool tip)
+            %                         Size: [4 x 4]
             %
             %   'Position' Argument
             %      A [1 x numDoF] vector that specifies the position of 
-            %      each degree of freedom. Rotational positions are 
-            %      specified in [rad].
+            %      each degree of freedom.  Rotational positions are 
+            %      specified in [rad].  Linear positions are in [m].
             %
-            %   Example
-            %      % Forward kinematics using group feedback
+            %   Examples:
+            %      % Forward kinematics for all the bodies in an arm
+            %      % using group feedback.
             %      fbk = group.getNextFeedback();
             %      frames = kin.getFK('output', fbk.position);
             %
-            %   See also HebiKinematics
+            %      % Forward kinematics for just the endeffector of an arm
+            %      % using commanded positions.
+            %      fbk = group.getNextFeedback();
+            %      frames = kin.getFK('endeffector', fbk.positionCmd);
+            %
+            %   See also HebiKinematics, getFK, addBody, setBaseFrame
             out = getForwardKinematics(this.obj, varargin{:});
         end
         
@@ -273,48 +326,86 @@ classdef (Sealed) HebiKinematics
 
         function out = getForwardKinematicsEndEffector(this, varargin)
             % getForwardKinematicsEndEffector is a convenience wrapper
-            % for getForwardKinematics('EndEffector').
+            % for getForwardKinematics('EndEffectorFrame').
             %
             %   See also HebiKinematics, getForwardKinematics
             out = getForwardKinematicsEndEffector(this.obj, varargin{:});
         end
         
         function out = getInverseKinematics(this, varargin)
-            % getInverseKinematics calculates positions for a desired end
-            % effector pose.  
+            % getInverseKinematics (getIK) calculates positions for a 
+            % desired end effector pose.  
             %
             %   This method computes the joint positions associated to a 
             %   desired end-effector configuration. The end effector is 
-            %   assumed to be the last body in the kinematic chain. There 
-            %   are a variety of optimization criteria that can be combined 
-            %   depending on the application. Available parameters include:
+            %   assumed to be the last body in the kinematic chain. 
             %
-            %      Parameter       EndEffector Target     Synonyms
-            %      'Xyz'           xyz position
-            %      'TipAxis'       z-axis orientation     ('axis')
-            %      'SO3'           3-dof orientation
+            %   getInverseKinematics uses a gradient-descent based local 
+            %   optimizer to find a valid configuration.  This means that
+            %   the quality of the solution depends on a good starting
+            %   point for the optimization. See 'initialPositions' detail
+            %   below, as this parameter should be used if at all possible.
+            %
+            %   There are a variety of optimization criteria that can be 
+            %   combined depending on the application. Available parameters 
+            %   include:
+            %
+            %      Parameter       EndEffector Target      Size / Units
+            %
+            %      'XYZ'           xyz position in [m]     3x1 in [m]
+            %
+            %      'TipAxis'       z-axis orientation      3x1 unit vector
+            %                      of the last body in
+            %                      in chain [unit vector]
+            %
+            %      'SO3'           3-DoF orientation       3x3 rotation 
+            %                                                  matrix
+            %
+            %      Note that 'XYZ' supports NaN for dimensions that 
+            %      should be ignored. For example, a planar arm may use
+            %      the target position of [x y NaN].
+            %
+            %      All target positions and orientations are expressed in
+            %      the base frame.
             %
             %   'MaxIterations' ('MaxIter') sets the maximum allowed
             %   iterations of the numerical optimization before returning.
+            %   This can prevent IK from taking a long time to run, at the
+            %   expense of solutions that are potentially less accurate.
+            %   The default value is 150 iterations.
             %
             %   'InitialPositions' ('Initial') provides the seed for the
-            %   numerical optimization. By default the  optimization seeds
-            %   with zeros.
+            %   numerical optimization. By default the optimization seeds
+            %   with all zeros. It is highly recommended that you specify
+            %   seed positions whenever you are using GETINVERSEKINEMATICS. 
             %
-            %   Note that 'xyz' supports NaN for dimensions that should be
-            %   ignored. For example, a planar arm may target [x y nan].
+            %   Examples:
+            %      % Inverse kinematics for a 3-DoF arm, specifying initial 
+            %      % joint angle positions.
+            %      xyz = [0.2 0.1 0.0];
+            %      initialJointAngs = [0 -pi/4 pi/2];
+            %      waypoints = kin.getInverseKinematics( 'XYZ', xyz, ...
+            %                    'IntialPositions', initialJointAngs );
             %
-            %   Example
-            %      % Inverse kinematics on carthesian coordinates
-            %      xyz = [0 0 0];
-            %      waypoints = kin.getInverseKinematics('xyz', xyz);
+            %      % Inverse kinematics for a 5-DoF arm, specifying initial 
+            %      % joint angle positions.
+            %      xyz = [0.2 0.1 0.0];
+            %      tipAxis = [0 0 -1];  % end effector points straight down
+            %      initialJointAngs = [0 -pi/4 pi/2 pi/4 0];
+            %      waypoints = kin.getIK( 'XYZ', xyz, ... 
+            %                             'TipAxis', tipAxis, ...
+            %                             'initial', initialJointAngs );
             %
-            %      % Inverse kinematics for full 6 dof
-            %      xyz = [0 0 0];
-            %      so3 = eye(3);
-            %      positions = kin.getIK('xyz', xyz, 'so3', so3);
+            %      % Inverse kinematics for full 6-DoF arm, using the
+            %      % latest feedback as the seed position for IK.     
+            %      xyz = [0.3 -0.1 0.2];
+            %      rotMatrix = eye(3);
+            %      fbk = group.getNextFeedback();
+            %      positions = kin.getIK( 'XYZ', xyz, ...
+            %                             'SO3', rotMatrix, ...
+            %                             'initial', fbk.position );
             %
-            %   See also HebiKinematics
+            %   See also HebiKinematics, getIK
             out = getInverseKinematics(this.obj, varargin{:});
         end
         
@@ -341,13 +432,15 @@ classdef (Sealed) HebiKinematics
             %   about the X-Y-Z axes in the world frame.
             %
             %   'FrameType' Argument
-            %       'Output'      calculates the transforms to the output
-            %                     of each body ('out')
-            %       'CoM'         calculates the transforms to the center
-            %                     of mass of each body
-            %       'EndEffector' calculates the transform to only the
-            %                     output frame of the last body, e.g.,
-            %                     a gripper
+            %       'OutputFrame'      calculates the transforms to the output
+            %                          of each body ('out')
+            %
+            %       'CoMFrame'         calculates the transforms to the center
+            %                          of mass of each body
+            %
+            %       'EndEffectorFrame' calculates the transform to only the
+            %                          output frame of the last body, e.g.,
+            %                          a gripper
             %
             %   'Position' Argument
             %       A [1 x numDoF] vector that specifies the position
@@ -366,17 +459,17 @@ classdef (Sealed) HebiKinematics
 
         function out = getJacobianEndEffector(this, varargin)
             % getJacobianEndEffector is a convenience wrapper
-            % for getJacobian('EndEffector').
+            % for getJacobian('EndEffectorFrame', position).
             %
             %   See also HebiKinematics, getJacobian
             out = getJacobianEndEffector(this.obj, varargin{:});
         end
         
-        function out = getGravCompTorques(this, varargin)
-            % getGravCompTorques calculates joint torques that compensate 
-            % for gravity
+        function out = getGravCompEfforts(this, varargin)
+            % getGravCompEfforts calculates joint efforts that compensate 
+            % for gravity.
             %
-            %   This method computes the torques that are required to
+            %   This method computes the efforts that are required to
             %   cancel out the forces on an arm caused by gravity
             % 
             %   'Positions' argument expects a [1 x numDoF] vector of 
@@ -390,24 +483,29 @@ classdef (Sealed) HebiKinematics
             %   Example
             %      % Compensate gravity at current position
             %      fbk = group.getNextFeedback();
-            %      gravity = [0 0 1];
-            %      torques = kin.getGravCompTorques(fbk.position, gravity);
+            %      gravity = [0 0 -1];
+            %      efforts = kin.getGravCompEfforts(fbk.position, gravity);
             %
-            %   See also HebiKinematics
-            out = getGravCompTorques(this.obj, varargin{:});
+            %   See also HebiKinematics, setPayload
+            out = getGravCompEfforts(this.obj, varargin{:});
         end
         
-        function out = getDynamicCompTorques(this, varargin)
-            % getDynamicCompTorques calculates joint torques that 
+        function out = getDynamicCompEfforts(this, varargin)
+            % getDynamicCompEfforts calculates joint efforts that 
             % compensate for dynamic motions
             %
-            %   This method computes the torques that are required to
+            %   This method computes the efforts that are required to
             %   accelerate the body masses as determined from the specified
-            %   positions, velocities and accelerations.
+            %   positions, velocities, and accelerations.
+            %
+            %   A recommended way of determining a set of desired
+            %   positions, velocities, and accelerations is to use the
+            %   HebiTrajectoryGenerator to create minimum-jerk trajectories
+            %   for the motion of the system.
             %
             %   'Positions' argument expects a vector of positions of
             %   all degrees of freedom, used for computing the Jacobian,
-            %   where (torque = J' * desiredForces)
+            %   where (effort = J' * desiredForces)
             %
             %   'TargetPositions', 'TargetVelocities', and 
             %   'TargetAccelerations' typically come from some sort of 
@@ -418,23 +516,27 @@ classdef (Sealed) HebiKinematics
             %      % Compensate for dynamics of sinusoidal motion
             %      fbk = group.getNextFeedback();
             % 
-            %      time = 0;
-            %      freq = 1 * (2*pi);  % 1 Hz 
-            %      amp = 1; 
+            %      time = 0.0;
+            %      freq = 1.0 * (2*pi);  % 1 Hz 
+            %      amp = 1.0; % rad
+            %
             %      position = amp * sin( freq * time );
             %      velocity = freq * amp * cos( freq*time );
-            %      accel = -freq^2 * amp * sin( feq*time );
+            %      accel = -freq^2 * amp * sin( freq*time );
+            %
             %      cmdPositions = position * ones(1,group.getNumModules);
             %      cmdVelocities = velocity * ones(1,group.getNumModules);
             %      cmdAccelerations = accel * ones(1,group.getNumModules);
-            %      torques = kin.getDynamicCompTorques(...
+            %
+            %      efforts = kin.getDynamicCompEfforts(...
             %                                    fbk.position, ...
             %                                    cmdPositions, ...
             %                                    cmdVelocities, ...
             %                                    cmdAccelerations);
             %
-            %   See also HebiKinematics
-            out = getDynamicCompTorques(this.obj, varargin{:});
+            %   See also HebiKinematics, setPayload, HebiTrajectory,
+            %   HebiTrajectoryGenerator.
+            out = getDynamicCompEfforts(this.obj, varargin{:});
         end
         
     end
@@ -453,7 +555,7 @@ classdef (Sealed) HebiKinematics
         
     end
     
-    properties(Access = private, Hidden = true)
+    properties(Access = public, Hidden = true)
         obj
     end
     

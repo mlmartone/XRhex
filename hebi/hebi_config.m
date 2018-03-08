@@ -7,7 +7,7 @@ switch simpleName
     case 'hebi_load'
         % Path to the binary library file. By default, it is assumed that
         % the library is placed in the same folder as this file.
-        config.libraryVersion = 'hebi-sdk0.5-rev1434';
+        config.libraryVersion = 'hebi-matlab-1.2-rev2085';
         config.libraryPath = fileparts(mfilename('fullpath'));
         
     case 'HebiLookup'
@@ -46,6 +46,19 @@ switch simpleName
         % is usually done in non-time critical sections, so it is often a
         % convenient spot to do some cleanup.
         config.triggerStopLogGC = true;
+        
+    case 'HebiTrajectoryGenerator'
+        % Minimum time to move between the start and end points of a
+        % trajectory. If this value is too low, the accelerations may be
+        % faster than physically possible.
+        config.defaultMinDuration = 2.0; % [s]
+        
+        % Speed factor that gets applied to all trajectories. For
+        % example, a value of 0.5 would slow down all trajectories to 50%.
+        config.defaultSpeedFactor = 1;
+        
+        % Algorithm used to calculate trajectories
+        config.defaultAlgorithm = 'UnconstrainedQp';
         
     otherwise
         config = [];
