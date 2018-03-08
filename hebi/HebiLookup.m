@@ -11,48 +11,55 @@ classdef (Sealed) HebiLookup
     %   default behavior in the <a href="matlab:open('hebi_config')">config script</a>.
     %
     %   HebiLookup Methods (configuration):
-    %   setLookupAddresses       - sets the lookup target address [ipv4]
-    %   setLookupFrequency       - sets the lookup and info request rate [Hz]
-    %   setInitialGroupFeedbackFrequency - sets the group feedback rate [Hz]
-    %   setInitialGroupCommandLifetime - sets the group command lifetime [s]
-    %   clearModuleList          - clears module list, including 'stale'
+    %   setLookupAddresses                - sets the lookup target address [ipv4]
+    %   setLookupFrequency                - sets the lookup request rate [Hz]
+    %   setInitialGroupFeedbackFrequency  - sets the group feedback rate [Hz]
+    %   setInitialGroupCommandLifetime    - sets the command lifetime [s]
+    %   clearModuleList                   - clears device list (including stale)
     %
     %   HebiLookup Methods (group creation):
-    %   newConnectedGroupFromName - groups by connectivity
-    %   newConnectedGroupFromMac  - groups by connectivity
-    %   newGroupFromFamily        - groups by family and sorts by name
-    %   newGroupFromNames         - groups by user defined names
-    %   newGroupFromMacs          - groups by hardware mac addresses
+    %   newGroupFromNames                 - groups by user defined names
+    %   newGroupFromFamily                - groups by family and sorts by name
+    %   newGroupFromSerialNumbers         - groups by hardware serial numbers
+    %   newGroupFromMacs                  - groups by hardware mac addresses
+    %   newConnectedGroupFromName         - groups by connectivity
+    %   newConnectedGroupFromSerialNumber - groups by connectivity
+    %   newConnectedGroupFromMac          - groups by connectivity
     %
     %   Generally there are two ways to address modules, either by their
-    %   user-configurable name, or by their hardware defined mac address.
-    %   Some modules (e.g. 'Fieldable' types) have knowledge of their
-    %   neighbors, which enables grouping based on their connectivity.
+    %   user-configurable name, or by their hardware defined mac address or
+    %   serial number. Some modules (e.g. 'Fieldable' types) have knowledge 
+    %   of their neighbors, which enables grouping based on their connectivity.
     %
     %   Example
-    %      % Show Network
+    %      % Show devices on the network
     %      display(HebiLookup);
     %
-    %   Example
-    %      % Create alphabetically ordered group of all modules
-    %      group = HebiLookup.newGroupFromFamily('*');
-    %
+    %   Examples
     %      % Create group using names
     %      family = 'Arm';
-    %      names = {'SA023'; 'SA032'; 'SA025'};
+    %      names = {'Base'; 'Shoulder'; 'Elbow'};
     %      group = HebiLookup.newGroupFromNames(family, names);
+    %
+    %      % Create an alphabetically ordered group of all modules
+    %      group = HebiLookup.newGroupFromFamily('*');
+    %
+    %      % Create group using serial numbers
+    %      serials = {'X-00009'; 'X-00042'; 'X-00001'};
+    %      group = HebiLookup.newGroupFromSerialNumbers(serials);\
     %
     %      % Create group using mac addresses
     %      macs = {'08:00:7F:9B:67:09'; '08:00:7F:50:BF:45'};
     %      group = HebiLookup.newGroupFromMacs(macs);
     %
     %      % Create a group of connected modules sorted by connectivity
-    %      group = HebiLookup.newConnectedGroupFromName('Arm', 'SA023');
+    %      group = HebiLookup.newConnectedGroupFromName('Arm', 'Base');
+    %      group = HebiLookup.newConnectedGroupFromSerialNumber('SA023');
     %      group = HebiLookup.newConnectedGroupFromMac('08:00:7F:9B:67:09');
     %
     %   See also HebiGroup
     
-    %   Copyright 2014-2016 HEBI Robotics, LLC.
+    %   Copyright 2014-2017 HEBI Robotics, Inc.
     
     % Static API
     methods(Static)
@@ -81,6 +88,14 @@ classdef (Sealed) HebiLookup
             this = HebiLookup.wrapper;
         end
         
+        function out = getLookupAddresses(varargin)
+            %getLookupAddresses gets the lookup target address [ipv4]
+            %
+            %   See also HebiLookup, setLookupAddresses
+            ips = javaMethod('getLookupAddresses', HebiLookup.className,  varargin{:});
+            out = cell(ips);
+        end
+        
         function this = setLookupFrequency(varargin)
             % setLookupFrequency sets the lookup request rate in [Hz]
             %
@@ -98,6 +113,13 @@ classdef (Sealed) HebiLookup
             %   See also HebiLookup
             javaMethod('setLookupFrequency', HebiLookup.className,  varargin{:});
             this = HebiLookup.wrapper;
+        end
+        
+        function out = getLookupFrequency(varargin)
+            %getLookupFrequency gets the lookup request rate in [Hz]
+            %
+            %   See also HebiLookup, setLookupFrequency
+            out = javaMethod('getLookupFrequency', HebiLookup.className,  varargin{:});
         end
         
         function this = setInitialGroupFeedbackFrequency(varargin)
@@ -138,6 +160,11 @@ classdef (Sealed) HebiLookup
             %   become cluttered with 'stale' modules.
             javaMethod('clearModuleList', HebiLookup.className,  varargin{:});
             this = HebiLookup.wrapper;
+            
+            % Add a pause so that the lookup has some
+            % time to find modules
+            config = hebi_config('HebiLookup');
+            pause(config.initialNetworkLookupPause);
         end
         
         function this = clearGroups(varargin)
@@ -148,25 +175,6 @@ classdef (Sealed) HebiLookup
             %   to be called.
             javaMethod('clearGroups', HebiLookup.className,  varargin{:});
             this = HebiLookup.wrapper;
-        end
-        
-        function group = newGroupFromFamily(varargin)
-            % newGroupFromFamily groups by family and sorts by name
-            %
-            %   This method groups all modules that match the selected
-            %   family, and orders them alphabetically by their name.
-            %
-            %   The family may include wildcard characters (*,?)
-            %
-            %   Example
-            %      % Create group of all modules of any group
-            %      group = HebiLookup.newGroupFromFamily('*');
-            %
-            %      % Create group of all modules in a certain group
-            %      group = HebiLookup.newGroupFromFamily('Arm');
-            %
-            %   See also HebiLookup, HebiGroup
-            group = HebiGroup(javaMethod('newGroupFromFamily', HebiLookup.className,  varargin{:}));
         end
         
         function group = newGroupFromNames(varargin)
@@ -194,14 +202,51 @@ classdef (Sealed) HebiLookup
             %          'Arm3'
             %      };
             %      names = {
-            %          'SA023'
-            %          'SA032'
-            %          'SA025'
+            %          'Base'
+            %          'Shoulder'
+            %          'Elbow'
             %      };
             %      group = HebiLookup.newGroupFromNames(families, names);
             %
             %   See also HebiLookup, HebiGroup
             group = HebiGroup(javaMethod('newGroupFromNames', HebiLookup.className,  varargin{:}));
+        end
+        
+        function group = newGroupFromSerialNumbers(varargin)
+            % newGroupFromSerialNumbers groups by hardware serial numbers
+            %
+            %   This method groups modules by their specified serial
+            %   numbers.
+            %
+            %   Example
+            %      serialNumbers = {
+            %          'SA023'
+            %          'SA032'
+            %          'SA025'
+            %      };
+            %      group = HebiLookup.newGroupFromSerialNumbers(serialNumbers);
+            %
+            %   See also HebiLookup, HebiGroup
+            group = HebiGroup(javaMethod('newGroupFromSerialNumbers', HebiLookup.className,  varargin{:}));
+        end
+        
+        function group = newGroupFromFamily(varargin)
+            % newGroupFromFamily groups by family and sorts by name
+            %
+            %   This method groups all modules that match the selected
+            %   family, and orders them alphabetically by their name.
+            %
+            %   The family may include wildcard characters (*,?)
+            %
+            %   Example
+            %      % Create group of all modules of any group
+            %      group = HebiLookup.newGroupFromFamily('*');
+            %
+            %      % Create group of all modules in a certain group
+            %      group = HebiLookup.newGroupFromFamily('Arm');
+            %
+            %   See also HebiLookup, HebiGroup
+            group = HebiGroup(javaMethod('newGroupFromFamily', HebiLookup.className,  varargin{:}));
         end
         
         function group = newGroupFromMacs(varargin)
@@ -232,11 +277,28 @@ classdef (Sealed) HebiLookup
             %
             %   Example
             %      family = 'SnakeMonster';
-            %      name = 'SA023';
+            %      name = 'Base1';
             %      group = HebiLookup.newConnectedGroupFromName(family, name);
             %
             %   See also HebiLookup, HebiGroup
             group = HebiGroup(javaMethod('newConnectedGroupFromName', HebiLookup.className,  varargin{:}));
+        end
+        
+        function group = newConnectedGroupFromSerialNumber(varargin)
+            % newConnectedGroupFromSerialNumber groups by connectivity
+            %
+            %   This method groups all modules that are connected to the
+            %   the module with the specified serial number, and orders them by
+            %   their connectivity (proximal to distal).
+            %
+            %   Note that not all module types support this.
+            %
+            %   Example
+            %      serial = 'SA023';
+            %      group = HebiLookup.newConnectedGroupFromSerialNumber(serial);
+            %
+            %   See also HebiLookup, HebiGroup
+            group = HebiGroup(javaMethod('newConnectedGroupFromSerialNumber', HebiLookup.className,  varargin{:}));
         end
         
         function group = newConnectedGroupFromMac(varargin)
@@ -264,7 +326,7 @@ classdef (Sealed) HebiLookup
         wrapper = HebiLookup();
     end
     
-    methods(Access = private, Static, Hidden = true)
+    methods(Access = public, Static, Hidden = true)
         function fullName = initOnce()
             % Load library and config
             fullName = hebi_load('HebiLookup');

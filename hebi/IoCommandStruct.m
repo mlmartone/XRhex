@@ -10,7 +10,7 @@ function struct = IoCommandStruct()
     %       io = IoCommandStruct();
     %       io.a1 = 1;
     %       io.b3 = 0.3;
-    %       group.set('io', io);
+    %       group.send('io', io);
     %
     %   See also HebiLookup, HebiGroup
     

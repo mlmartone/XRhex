@@ -5,14 +5,30 @@ classdef (Sealed) HebiPoseFilter
     %
     %   HebiPoseFilter Methods:
     %      setMaxAccelNormDev - max deviation from the norm
-    %      setAccelNormBias   - accel norm when idle
     %      setMaxAccelWeight  - trust in accelerometers [0-1]
-    %      setGyroScale       - trust multiplier for gyros [>0]
-    %      resetYaw           - resets dead-reackoned yaw (rotation about z in world)
+    %      setYaw             - sets dead-reackoned yaw [rad] (rotation about z in world)
     %      update             - input: 3x accel [g], 3x gyro [rad/s], abs time [s]
     %      getPose            - out: 4x4 transform matrix
+    %
+    %
+    %   Example
+    %      % Continuously find pose of a module
+    %      group = HebiLookup.newGroupFromSerials('SA023');
+    %      poseFilter = HebiPoseFilter();
+    %      poseFilter.setYaw(0.23); % (optional) set yaw to non-zero origin
+    %      while true
+    %         % Update filter
+    %         fbk = group.getNextFeedback();
+    %         accels = [fbk.accelX, fbk.accelY, fbk.accelZ];
+    %         gyros = [fbk.gyroX, fbk.gyroY, fbk.gyroZ];
+    %         poseFilter.update(accels, gyros, fbk.time);
+    %
+    %         % Show current pose
+    %         pose = poseFilter.getPose();
+    %         disp(pose);
+    %      end
     
-    %   Copyright 2014-2016 HEBI Robotics, LLC.
+    %   Copyright 2014-2017 HEBI Robotics, Inc.
     
     % Public API
     methods(Access = public)
@@ -22,24 +38,14 @@ classdef (Sealed) HebiPoseFilter
             setMaxAccelNormDev(this.obj, varargin{:});
         end
         
-        function this = setAccelNormBias(this, varargin)
-            %setAccelNormBias accel norm when idle
-            setAccelNormBias(this.obj, varargin{:});
-        end
-        
         function this = setMaxAccelWeight(this, varargin)
             %setMaxAccelWeight trust in accelerometers [0-1]
             setMaxAccelWeight(this.obj, varargin{:});
         end
         
-        function this = setGyroScale(this, varargin)
-            %setGyroScale trust multiplier for gyros [>0]
-            setGyroScale(this.obj, varargin{:});
-        end
-        
-        function this = resetYaw(this, varargin)
-            %resetYaw resets dead-reackoned yaw (rotation about z in world)
-            resetYaw(this.obj, varargin{:});
+        function this = setYaw(this, varargin)
+            %setYaw sets dead-reackoned yaw (rotation about z in world)
+            setYaw(this.obj, varargin{:});
         end
         
         function this = update(this, varargin)
