@@ -67,9 +67,11 @@ while true
     end
     if dpad == 180;
         robot.takeStepBackwards([stepSize stepSize],stepTime, upsideDown);
+        %add if statements into code itself to fix turning
     end
     if dpad == 225;
         robot.takeStepBackwards([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime, upsideDown);
+    %to fix turning, switch left and right and it should be okay
     end
     if dpad == 270;
         robot.takeStep([maxStepSize minStepSize],stepTime,gait, upsideDown);
@@ -80,24 +82,7 @@ while true
     
     if buttons(1); robot.flipRobot(); end %robot flips upside-down
     if buttons(2) && toc(lastTimeChange) > buttonIgnore; 
-        %Changes the robot to upside-down mode
-        %Will be deleted with pose estimation
-        lastTimeChange = tic;
-
-        if(upsideDown == true)
-        upsideDown = false;
-        disp('Upside Down is');
-        disp(upsideDown);
-     
-        else
-        upsideDown = true;
-        disp('Upside Down is');
-        disp(upsideDown);
-        disp('Note: Backward Walking Experimental');
-        end
-        
-    end
-    
+        robot.moveLegsToPos(ones(1,6)*2*pi); end %point up
     if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end %point backward
     if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end %point down
     
@@ -147,8 +132,12 @@ while true
     if buttons(10); break; end
     
     %Print instructions for user in console
-    if buttons(11) ; printInstructions(); end
-    
+    %Changes robot to upside-down mode (will be deleted with pose
+    %estimation
+    if buttons(11) ; 
+        robot.printInstructions();
+        
+    end
     %Stand up
     if buttons(12); %right joystick
         if(upsideDown == true)
