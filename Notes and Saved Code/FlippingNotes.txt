@@ -1,6 +1,11 @@
 Jumping Testing
 
+Jumping Limits
+(3 7/8 (robot touching wall), 18.25)
+
+Testing:
 center of wheel starts:
+
 3 7/8 (touching wall) - front edge of front tape, (unreliable,limit)
 5 7/8, 6 inches inches from wall - front edge of 5.75 tape (unreliable) 
 6 5/8 inches from wall - back edge of 5.75 tape
@@ -19,5 +24,4 @@ do not have multiple trials after this point
 17 1/8 approx - front edge of 17 3/8 tape
 18 1/4 approx - front edge of 18 1/4 tape - UNRELIABLE, LIMIT
 
-Jumping Limits
-(3 7/8 (robot touching wall), 18.25)
+

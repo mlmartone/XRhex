@@ -1,0 +1,12 @@
+Functions that Need to be Written:
+
+Upside-Down to Right-Side Up Flipping
+Upside-Down Stair-Walking
+Upside-Down Leaping
+RobotGoToPos Counter-Clockwise
+
+Functions that Need to Be Fixed:
+Wave Gait
+
+Write:
+Instruction Manual

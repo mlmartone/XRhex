@@ -1,0 +1,24 @@
+ function takeStepReverseTripod(robot,stepSize,stepTime)
+        %Robot takes a tripod step upside-down.
+        %This code should no longer be needed, and should be incorperated
+        %into other code.
+        
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = 2*pi*round(curPos/(2*pi)) + ...
+                [stepSize(1); 2*pi-stepSize(1); stepSize(1);...
+                2*pi-stepSize(2); stepSize(2); 2*pi-stepSize(2)];
+            pos2 = pos1 + [2*pi-2*stepSize(1); 2*stepSize(1); ...
+                2*pi-2*stepSize(1); 2*stepSize(2); 2*pi-2*stepSize(2);...
+                2*stepSize(2)];
+ 
+            pos1 = pos1+pi*[1 -1 1 -1 1 -1]';
+            pos2 = pos2+pi*[1 -1 1 -1 1 -1]';
+            
+            stepPoints = [curPos,pos1,pos2];
+            stepTimes = linspace(0,stepTime,size(stepPoints,2));
+            speeds = zeros(6,3);
+            %Generate and execute the trajectory
+            walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+            robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+        end

@@ -53,10 +53,6 @@ while true
     %Read in the next input from the joystick
     [sticks, buttons, dpad] = read(joy);
     sticks = sticks.*[1 -1 1 -1];
-    %Direciton Pad Control, tell robot to walk forward, backward, turn,
-    %etc.
-    %Step sizes allow for turning by altering steps on right and left
-    %sides, bigger step disparities allow for sharper turns
     if dpad == 0; robot.takeStep([stepSize stepSize],stepTime,gait, upsideDown); end
     if dpad == 45;
         robot.takeStep([stepSize/sqrt(2) stepSize*sqrt(2)],stepTime,gait, upsideDown);
@@ -84,14 +80,7 @@ while true
         robot.takeStep([stepSize*sqrt(2) stepSize/sqrt(2)],stepTime,gait, upsideDown);
     end
     
-    %buttons 1-4 are debug - moves like a clock as a debugger)
-    %rewrite and make second controller script for upside-down walking
-    %adapt buttonignore to upside-down walking toggle -- 5/6 for example
-    
-    %tic - how long since matlab has been installed
-    %toc - elapsed since last called tic
-    %Move all legs to clock positions, mostly for debug purposes
-    if buttons(1); robot.moveLegsToPos(ones(1,6)*pi/2); end %all point forward
+    if buttons(1); robot.flipRobot(); end %robot flips upside-down
     if buttons(2); robot.moveLegsToPos(ones(1,6)*2*pi); end %point up
     if buttons(3); robot.moveLegsToPos(ones(1,6)*3*pi/2); end %point backward
     if buttons(4); robot.moveLegsToPos(ones(1,6)*pi); end %point down
@@ -140,12 +129,14 @@ while true
     end
     %Quit loop on button press
     if buttons(10); break; end
+    
     %Print instructions for user in console
+    %Changes robot to upside-down mode (will be deleted with pose
+    %estimation
     if buttons(11) && toc(lastTimeChange) > buttonIgnore; 
         lastTimeChange = tic;
 
         printInstructions(); 
-        %can switch to button 1 -- add a comment
         if(upsideDown == true)
         upsideDown = false;
         disp('Upside Down is');
@@ -167,7 +158,6 @@ while true
             robot.standUp();
         end
     end 
-    %originally robot.standUp()
     if sum(buttons) == 0; robot.group.set(robot.cmd); end
     pause(robot.pauseTime)
 end

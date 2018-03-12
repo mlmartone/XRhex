@@ -1,0 +1,42 @@
+   function waveGaitAdriana(robot,stepSize,stepTime)
+      	%DO NOT USE -- UNEXPECTED ERRORS
+             bigStep = 2*pi-stepSize;
+     	     %get current postion (curPosition) and make the first position
+             %normal so the robot doesn't freak out
+             robot.fbk = robot.group.getNextFeedback();
+             curPos = robot.fbk.position.*robot.directionFlip;
+             
+             %Stands up to get a nice, clean slate (Initialize Robot)
+             %robot.standUp();
+             pos0 = 2*pi*ceil(curPos/(2*pi)) + ...
+                 [0, 0, 0, 0, 0, 0,];
+             %Gets to starting position
+             
+             %[stepSize,  0, bigStep, stepSize, 0, bigStep]
+             
+             posA =  pos0 + [stepSize(1),  0, 2*pi-stepSize(1), stepSize(2), 0, 2*pi-stepSize(2)];
+             %says that added matrix is 1 by 10 not 1 by 6
+             robot.moveLegsToPos(posA);
+             
+             %First Position
+             pos1 = posA + [2*pi-stepSize(1),  stepSize(1), stepSize(1), 2*pi-stepSize(2), ...
+                 stepSize(2), stepSize(2)];
+             
+             
+             %Second Position
+             pos2 = pos1 + [stepSize(1),  2*pi-stepSize(1), stepSize(1), stepSize(2), ...
+                 2*pi-stepSize(2), stepSize(2)];
+          
+             % third Position
+             pos3 = pos2 + [stepSize(1),  stepSize(1), 2*pi-stepSize(1), stepSize(2),...
+                 stepSize(2), 2*pi-stepSize(2)];
+             
+             stepPoints = [posA; pos1; pos2; pos3]; %any way to just repeat last 3
+             size(stepPoints);
+            stepTimes = linspace(0,stepTime,size(stepPoints,2));
+            speeds = zeros(6,4);
+            %Generate and execute the trajectory
+            walkTraj = robot.generateLegTraj(stepPoints',stepTimes,speeds);
+            robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+       
+        end

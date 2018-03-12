@@ -1,0 +1,40 @@
+ function safeFlipRobot(robot)
+          %This function pushes the robot onto a wall and flips. This
+          %function is slower and is safer to use than the regular flipping
+          %code.
+
+	  %Flips from right-side up to upside-down.
+            
+            stepTime = 3; 
+	  %This value can be anywhere between 3-8
+ 	  %This function determines the time it takes the flip.
+            
+            %Gets robot into a good position for flipping
+            %Not part of the trajectory to give the robot time to get into
+            %flipping position.
+
+            robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos1');
+        
+            %Flipping Trajectory
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
+           pos3 = pos2+[0; pi/4; 0; 0; pi/4; 0]; 
+           pos4 = pos3+[0; pi/2; 0; 0; pi/2; 0];         
+           pos5 = pos4+[pi/2; 0; 0; 0; 0; pi/2];  
+           pos6 = pos5+[7*pi/4; 0; 0; 0; 0; 7*pi/4]; 
+
+         stepPoints = [pos2, pos3, pos4, pos5, pos6];
+         stepTimes = linspace(0,stepTime,size(stepPoints,2));
+         speeds = zeros(6,6);
+                
+          %Generate and execute the trajectory
+         walkTraj = robot.generateLegTraj(stepPoints,stepTimes,speeds);
+         robot.followLegTraj(walkTraj,1,size(walkTraj,2));
+            
+         disp('Done Flipping: Remember to Switch to Upside-Down Mode');
+        end
