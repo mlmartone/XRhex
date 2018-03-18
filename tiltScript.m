@@ -55,7 +55,7 @@ while true
     if dpad == 270; end
     if dpad == 315; end
     
-    if buttons(1); end
+    if buttons(1); robot.standUp(); end
     if buttons(2); robot.moveLegsToPos(zeros(1,6)); end
     if buttons(3); end
     if buttons(4); end

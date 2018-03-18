@@ -1,7 +1,6 @@
 %Displays control instructions for X-Rhex
 %Created 4/12/17 - Updated 4/13/17
-function 
-printInstructions()
+function printInstructions()
 
 fprintf('\n \n \n');
 

@@ -448,35 +448,14 @@ classdef XRhex
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           posC = curPos + [0; 0; pi/2; pi/2; 0; 0];
-          % robot.moveLegsToPos(posC');
+           posC = curPos + [0; 3*pi/4; 0; 0; 3*pi/4; 0];
+           robot.moveLegsToPos(posC');
            
-           %back from here
-           
-           robot.fbk = robot.group.getNextFeedback;
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           posD = curPos + [0; pi/4; 0; 0; pi/4; 0];
-           %robot.moveLegsToPos(posD');
-           
-           %gait position?? Troubles from here
-                  
-           robot.fbk = robot.group.getNextFeedback;
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           pos5 = curPos + [0; 0; pi/2; pi/2; 0; 0];
-           %robot.moveLegsToPos(pos5'); %3pi/4
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           posE = curPos + [pi/4; 0; 0; 0; 0; pi/4];
-           %robot.moveLegsToPos(posE'); 
-           
-           robot.fbk = robot.group.getNextFeedback;
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           pos5 = curPos + [0; 0; pi/2; pi/2; 0; 0];
-           %robot.moveLegsToPos(pos5');         
-
-    
-
+           pos5 = curPos + [0; 0; 5*pi/4; 5*pi/4; 0; 0];
+           %robot.moveLegsToPos(pos5');
            
            %Robot is at a good position here, cleaning on the first two
            %steps but not on the last one
