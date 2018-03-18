@@ -320,6 +320,7 @@ classdef XRhex
            %Creates the robot flipping trajectory.
             robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
+            
             pos1 = [pi/2;0; 0;0; 0; pi/2]; 
             pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
             %robot.moveLegsToPos(pos1');
@@ -351,7 +352,7 @@ classdef XRhex
            pos10 = pos9+[7*pi/4; 0; 0; 0; 0; 7*pi/4]; 
            %robot.moveLegsToPos(pos10');
 
-       stepPoints = [pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9, pos10]; %commas
+       stepPoints = [pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9, pos10];
        stepTimes = linspace(0,stepTime,size(stepPoints,2));
        speeds = zeros(6,10);
                 
@@ -568,7 +569,7 @@ classdef XRhex
                 pause(robot.pauseTime);
                 robot.fbk = robot.group.getNextFeedback();
                 %Break out of infinite loops caused by unresponsive modules
-                if(toc(start) > 3); 
+                if(toc(start) > 3) 
                     break;
                     %error('Unresponsive Module Error');
                 end
