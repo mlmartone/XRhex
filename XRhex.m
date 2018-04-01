@@ -443,67 +443,38 @@ classdef XRhex
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           posB = curPos + [pi/4; 0; 0; 0; 0; pi/4];
-           robot.moveLegsToPos(posB'); %was pi/2
+           posB= curPos + [pi/4; 0; pi/4; pi/4; 0; pi/4];
+           robot.moveLegsToPos(posB');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           posB= curPos + [pi/2; 0; pi/4; pi/4; 0; pi/2];
+           robot.moveLegsToPos(posB');
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
            posC = curPos + [0; 0; pi/2; pi/2; 0; 0];
-          % robot.moveLegsToPos(posC');
-           
-           %back from here
+           robot.moveLegsToPos(posC');
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
            posD = curPos + [0; pi/4; 0; 0; pi/4; 0];
-           %robot.moveLegsToPos(posD');
+           robot.moveLegsToPos(posD');
            
-           %gait position?? Troubles from here
-                  
-           robot.fbk = robot.group.getNextFeedback;
+            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           pos5 = curPos + [0; 0; pi/2; pi/2; 0; 0];
-           %robot.moveLegsToPos(pos5'); %3pi/4
+           posE = curPos + [0; 0; 3*pi/4; 3*pi/4; 0; 0];
+           robot.moveLegsToPos(posE');
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           posE = curPos + [pi/4; 0; 0; 0; 0; pi/4];
-           %robot.moveLegsToPos(posE'); 
+           posF = curPos + [pi; 0; 0; 0; 0; pi];
+           robot.moveLegsToPos(posF');
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           pos5 = curPos + [0; 0; pi/2; pi/2; 0; 0];
-           %robot.moveLegsToPos(pos5');         
-
-    
-
-           
-           %Robot is at a good position here, cleaning on the first two
-           %steps but not on the last one
-                   
-           robot.fbk = robot.group.getNextFeedback;
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           pos6 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
-           %robot.moveLegsToPos(pos6');
-          
-          robot.fbk = robot.group.getNextFeedback;
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           pos7 = curPos + [pi/4; pi/2; pi/2; pi/2; pi/2; pi/4];
-           %robot.moveLegsToPos(pos7');
-           
-           robot.fbk = robot.group.getNextFeedback;
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           pos8 = curPos + [3*pi/2; 0; 0; 0; 0; 3*pi/2];
-           %robot.moveLegsToPos(pos8');
-           
-           %%% The top step is a little big, it seems like a repeat of the
-           %%% above code should have worked...
-           
-           robot.fbk = robot.group.getNextFeedback;
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           pos8 = curPos + [0; 7*pi/4; 0; 0; 7*pi/4; 0];
-           %robot.moveLegsToPos(pos8');
-           %originally 3pi/2
+           posF = curPos + [0; pi/2; 0; 0; pi/2; 0];
+           robot.moveLegsToPos(posF');
                     
            disp('click enter to continue');
            pause();
