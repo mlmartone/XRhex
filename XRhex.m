@@ -439,10 +439,13 @@ classdef XRhex
           
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           pos11 = curPos + [0; pi/4; pi; pi; pi/4; 0];
-           %robot.moveLegsToPos(pos11');
+           pos11 = curPos + [0; pi/2; pi/2; pi/2; pi/2; 0];
+           robot.moveLegsToPos(pos11');
            
-
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos12 = curPos + [0; pi/2; 0; 0; pi/2; 0];
+           robot.moveLegsToPos(pos12');
            
            
            %Robot is at a good position here, cleaning on the first two
