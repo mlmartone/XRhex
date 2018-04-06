@@ -435,14 +435,27 @@ classdef XRhex
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
            pos10 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
-           robot.moveLegsToPos(pos10'); %try again from here
+           robot.moveLegsToPos(pos10'); 
           
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
            pos11 = curPos + [0; pi/4; pi; pi; pi/4; 0];
-           %robot.moveLegsToPos(pos11');
+           robot.moveLegsToPos(pos11');
            
-
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos12 = curPos + [pi/2; 0; 0; 0; 0; pi/2];
+           robot.moveLegsToPos(pos12'); %resting on chassis, which is bad
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos13 = curPos + [0; pi/4; 0; 0; pi/4; 0];
+           robot.moveLegsToPos(pos13');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos14 = curPos + [0; pi/4; 0; 0; 0; 0];
+           robot.moveLegsToPos(pos14');
            
            
            %Robot is at a good position here, cleaning on the first two
