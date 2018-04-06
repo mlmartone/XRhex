@@ -385,32 +385,79 @@ classdef XRhex
         end
 
         function initializeStairs(robot)
-            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*robot.directionFlip';
-            pos1 = curPos+ [7*pi/4; pi/4; 7*pi/4; 7*pi/4; pi/4; 7*pi/4]; 
-            robot.moveLegsToPos(pos1');
-           
-            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*robot.directionFlip';
-            pos2 = curPos+ [pi/2;  0; pi/2 ; pi/2; 0; pi/2]; 
-            robot.moveLegsToPos(pos2');
-            
-            robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*robot.directionFlip';
-            pos3 = curPos+ [pi/4; 7*pi/4; 7*pi/4; 7*pi/4; 7*pi/4; pi/4]; 
-            robot.moveLegsToPos(pos3');
-            
-             robot.fbk = robot.group.getNextFeedback();
-            curPos = robot.fbk.position'.*robot.directionFlip';
-            pos4 = curPos+ [pi/2;  pi/2 ; pi/2 ; pi/2 ; pi/2; pi/2]; 
-            robot.moveLegsToPos(pos4');
+
 
            
         end
         
         function takeStepStairs(robot, stepSize, stepTime)
  
-          robot.initializeStairs();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos1');
+            
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
+           robot.moveLegsToPos(pos2');
+           
+           robot.fbk = robot.group.getNextFeedback;       
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos3 = curPos + [0; pi/2; 0; 0; pi/2; 0];
+          robot.moveLegsToPos(pos3');
+          
+           robot.fbk = robot.group.getNextFeedback;       
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos4 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
+          robot.moveLegsToPos(pos4');
+          
+           robot.fbk = robot.group.getNextFeedback;       
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos5 = curPos + [0; 0; 5*pi/4; 5*pi/4; 0; 0];
+          robot.moveLegsToPos(pos5'); %originally pos1 
+          %STARTED HERE TODAY
+          
+            robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos6 = curPos + [0; 0; pi/4; pi/4; 0; 0];
+           robot.moveLegsToPos(pos6'); 
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos7 = curPos + [0; pi/4; 0; 0; pi/4; 0];
+           robot.moveLegsToPos(pos7');  
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos8 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
+           robot.moveLegsToPos(pos8'); 
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos9 = curPos + [0; 5*pi/4; 0; 0; 5*pi/4; 0];
+           robot.moveLegsToPos(pos9');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos10 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
+           robot.moveLegsToPos(pos10');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos11 = curPos + [0; pi/4; pi/2; pi/2; pi/4; 0];
+           robot.moveLegsToPos(pos11'); %crooked from here?
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos11 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
+           robot.moveLegsToPos(pos11');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos12 = curPos + [0; 0; pi; pi; 0; 0];
+           robot.moveLegsToPos(pos12'); %was originally 5pi/4
+
 
            disp('click enter to continue');
            pause();
