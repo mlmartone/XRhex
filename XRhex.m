@@ -385,16 +385,7 @@ classdef XRhex
         end
 
         function initializeStairs(robot)
-            
-           
-        end
-        
-        function takeStepStairs(robot, stepSize, stepTime)
-            
-            %pose estimation
-            
-            
-          robot.fbk = robot.group.getNextFeedback();
+            robot.fbk = robot.group.getNextFeedback();
             curPos = robot.fbk.position'.*robot.directionFlip';
             pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
             pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
@@ -414,39 +405,38 @@ classdef XRhex
            curPos = robot.fbk.position'.*robot.directionFlip';
            pos4 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
           robot.moveLegsToPos(pos4');
-          %initialize stairs routine from before (will expand)
-
+           
+        end
+        
+        function takeStepStairs(robot, stepSize, stepTime)
+           robot.fbk = robot.group.getNextFeedback();
+            curPos = robot.fbk.position'.*robot.directionFlip';
+            pos1 = [pi/2; pi/2; pi/2; pi/2; pi/2; pi/2]; 
+            pos1 = mod(pos1,2*pi)+floor(curPos/(2*pi))*2*pi;
+            robot.moveLegsToPos(pos1');
+            
+           robot.fbk = robot.group.getNextFeedback();
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos2 = curPos+[-pi; -pi; 0; 0; -pi; -pi]; 
+           robot.moveLegsToPos(pos2');
            
            robot.fbk = robot.group.getNextFeedback;       
            curPos = robot.fbk.position'.*robot.directionFlip';
-           posA = curPos + [0; 0; pi; pi; 0; 0];
-          robot.moveLegsToPos(posA'); %pi
+           pos3 = curPos + [0; pi/2; 0; 0; pi/2; 0];
+          robot.moveLegsToPos(pos3');
           
            robot.fbk = robot.group.getNextFeedback;       
            curPos = robot.fbk.position'.*robot.directionFlip';
-           posB = curPos + [0; pi; 0; 0; pi; 0];
-          robot.moveLegsToPos(posB');
+           pos4 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
+          robot.moveLegsToPos(pos4'); %restarted from here
           
+          %next time - unsymetrical gait
            robot.fbk = robot.group.getNextFeedback;       
            curPos = robot.fbk.position'.*robot.directionFlip';
-           posC = curPos + [pi/2; 0; 0; 0; 0; pi/2];
-          robot.moveLegsToPos(posC');
+           pos4 = curPos + [5*pi/4; 0; 0; 0; 0; 0];
+          robot.moveLegsToPos(pos4');
           
-            robot.fbk = robot.group.getNextFeedback;       
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           posD = curPos + [pi/2; 0; pi/2; pi/2; 0; pi/2];
-          robot.moveLegsToPos(posD');
-          
-           robot.fbk = robot.group.getNextFeedback;       
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           posE = curPos + [0; pi; pi; pi; pi; 0];
-          robot.moveLegsToPos(posE');
-         
-           robot.fbk = robot.group.getNextFeedback;       
-           curPos = robot.fbk.position'.*robot.directionFlip';
-           posF = curPos + [pi; 0; 0; 0; 0; pi];
-          robot.moveLegsToPos(posF');
-         
+
            disp('click enter to continue');
            pause();
            disp('finished with takeStepStairs');
