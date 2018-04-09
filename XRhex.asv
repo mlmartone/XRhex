@@ -456,13 +456,20 @@ classdef XRhex
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
            pos13 = curPos + [0; 0; pi/2; pi/2; 0; 0];
-           robot.moveLegsToPos(pos13'); %legs can barely reach top step
+           robot.moveLegsToPos(pos13');
            
            robot.fbk = robot.group.getNextFeedback;
            curPos = robot.fbk.position'.*robot.directionFlip';
-           pos14= curPos + [3*pi/2; 0; 0; 0; 0; 3*pi/2];
-           robot.moveLegsToPos(pos14'); 
-          
+           pos14 = curPos + [pi/4; 0; 0; 0; 0; pi/4];
+           robot.moveLegsToPos(pos14');
+           
+           robot.fbk = robot.group.getNextFeedback;
+           curPos = robot.fbk.position'.*robot.directionFlip';
+           pos15 = curPos + [pi; 0; pi/2; 0; 0; pi];
+           robot.moveLegsToPos(pos15');
+           
+           disp('click enter to continue');
+           pause();
            disp('finished with takeStepStairs');
         end
         
