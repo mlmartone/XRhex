@@ -120,7 +120,7 @@ while true
     end
     if buttons(7) && toc(lastSizeChange) > buttonIgnore;
         lastSizeChange = tic;
-        stepSize = stepSize - pi/12;
+        stepSize = stepSize - pi/24; %pi/12 before
         if stepSize <= minStepSize
             stepSize = minStepSize;
         end
@@ -128,7 +128,7 @@ while true
     end
     if buttons(8) && toc(lastSizeChange) > buttonIgnore;
         lastSizeChange = tic;
-        stepSize = stepSize + pi/12;
+        stepSize = stepSize + pi/24; %pi/12 before
         if stepSize >= maxStepSize
             stepSize = maxStepSize;
         end
